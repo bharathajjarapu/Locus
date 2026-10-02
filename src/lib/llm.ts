@@ -1,67 +1,45 @@
-import { useSyncExternalStore } from "react";
-import { LoggerWithoutDebug, Wllama } from "@wllama/wllama/esm/index.js";
-import wasm from "@wllama/wllama/esm/wasm/wllama.wasm?url";
+import type { ChatCompletionMessage, ChatCompletionTool, ChatCompletionToolCall } from "@wllama/wllama/esm/index.js";
+import { atom } from "@/lib/atom";
+import { engine } from "@/lib/engine";
+import { find, models, options, setOptions, type Model } from "@/lib/models";
 
-export const model = {
-  name: "LFM2.5 230M",
-  size: "149 MB",
-  repo: "LiquidAI/LFM2.5-230M-GGUF",
-  file: "LFM2.5-230M-QAD-Q4_0.gguf",
-};
-
-export type Turn = { role: "system" | "user" | "assistant"; content: string };
+export type Turn = ChatCompletionMessage;
 export type Stats = { speed: number; tokens: number };
 type State = {
+  model: Model;
+  think: boolean;
+  busy: boolean;
   status: "idle" | "loading" | "ready" | "error";
   progress: number;
   error?: string;
 };
 
-// Sampling recommended by Liquid AI for LFM2.5, plus reply and context limits
-export const defaults = { temperature: 0.1, top_k: 50, top_p: 1, min_p: 0, repeat_penalty: 1.05, max_tokens: 2048, n_ctx: 8192, cpu: true };
-export type Options = typeof defaults;
-
-// Reads saved model options over the defaults
-export const options = (): Options => ({ ...defaults, ...JSON.parse(localStorage.getItem("modelOptions") ?? "{}") });
-// Saves model options; n_ctx and cpu apply on the next load
-export const setOptions = (value: Options) => localStorage.setItem("modelOptions", JSON.stringify(value));
-
-const wllama = new Wllama({ default: wasm }, { logger: LoggerWithoutDebug });
-const listeners = new Set<() => void>();
-let state: State = { status: "idle", progress: 0 };
+const wllama = engine();
+// The model selected in saved options
+const active = () => find(options().model);
+const store = atom<State>({ model: active(), think: options().think && active().think, busy: false, status: "idle", progress: 0 });
+const { get, set: update } = store;
+export const useModel = store.use;
 let loading: Promise<void> | undefined;
 let gpu = false;
 
-// Updates the shared model state and notifies subscribers
-function update(patch: Partial<State>) {
-  state = { ...state, ...patch };
-  listeners.forEach((listener) => listener());
-}
-
-// Subscribes React to the model state
-export function useModel() {
-  return useSyncExternalStore(
-    (listener) => {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-    () => state,
-  );
-}
-
-// Downloads the model once (cached in OPFS afterwards) and loads it on WebGPU
+// Downloads the model once (cached in OPFS afterwards) and loads it on GPU or CPU
 export function load() {
   loading ??= (async () => {
-    update({ status: "loading", progress: 0, error: undefined });
+    const { repo, file, mmproj } = active();
+    update({ model: active(), status: "loading", progress: 0, error: undefined });
     try {
-      gpu = !options().cpu && !!(await navigator.gpu?.requestAdapter().catch(() => null));
+      const { compute } = options();
+      const adapter = compute === "cpu" ? null : await navigator.gpu?.requestAdapter().catch(() => null);
+      // ponytail: auto picks GPU by vendor only, since small models run slower on most integrated GPUs; add a speed test if it misjudges
+      gpu = !!adapter && (compute === "gpu" || ["nvidia", "apple"].includes(adapter.info?.vendor));
       await wllama.loadModelFromHF(
-        { repo: model.repo, file: model.file },
+        { repo, file, mmprojFile: mmproj },
         {
           n_ctx: options().n_ctx,
-          ...(options().cpu && { n_gpu_layers: 0 }),
-          progressCallback: ({ loaded, total }) =>
-            update({ progress: total ? loaded / total : 0 }),
+          // wllama defaults to half the cores; all of them decode ~60% faster, but reading images hangs with more than two
+          ...(!gpu && { n_gpu_layers: 0, n_threads: mmproj ? 2 : navigator.hardwareConcurrency }),
+          progressCallback: ({ loaded, total }) => update({ progress: total ? loaded / total : 0 }),
         },
       );
       update({ status: "ready", progress: 1 });
@@ -74,49 +52,118 @@ export function load() {
   return loading;
 }
 
+// Loads without throwing; failures show up in the model state
+export const preload = () => load().catch(() => {});
+
+// Swaps to another model, applying its recommended sampling
+export async function pick(id: string) {
+  const next = find(id);
+  setOptions({ ...options(), ...next.preset, model: next.id, think: next.think });
+  // Let a load in progress finish first, so two loads never share the engine
+  await loading?.catch(() => {});
+  await wllama.exit();
+  loading = undefined;
+  update({ model: next, think: next.think, status: "idle", progress: 0, error: undefined });
+  await preload();
+}
+
+// Turns the model's thinking on or off
+export function toggleThink() {
+  setOptions({ ...options(), think: !get().think });
+  update({ think: !get().think });
+}
+
+// Whether the selected model can call tools
+export const canCallTools = () => active().tools;
+
+// Whether the selected model can look at pictures
+export const canSee = () => !!active().mmproj;
+
 // Names what the loaded model runs on
 export const backend = () => (gpu ? "WebGPU" : `CPU · ${wllama.getNumThreads()} threads`);
 
-// Deletes cached weights so the next load downloads them again
-export async function clear() {
-  await wllama.exit();
-  await wllama.modelManager.clear();
+// Lists the downloaded copies of the catalog models
+const stored = async () => {
+  const copies = await wllama.modelManager.getModels();
+  return models.map((item) => ({ id: item.id, copy: copies.find((entry) => entry.url.includes(item.file)) }));
+};
+
+// Lists the ids of downloaded models
+export const cached = async () => (await stored()).filter((item) => item.copy).map((item) => item.id);
+
+// Deletes one model's downloaded weights
+export async function remove(id: string) {
+  await (await stored()).find((item) => item.id === id)?.copy?.remove();
 }
 
-// Streams a reply, calling onText with the full text so far
-export async function reply(
-  turns: Turn[],
-  signal: AbortSignal,
-  onText: (text: string, stats?: Stats) => void,
-  limit?: number,
-) {
+// Marks the model busy while a task runs, so it cannot be swapped underneath it
+export async function exclusive<T>(task: () => Promise<T>) {
+  update({ busy: true });
+  try {
+    return await task();
+  } finally {
+    update({ busy: false });
+  }
+}
+
+type Request = {
+  turns: Turn[];
+  signal: AbortSignal;
+  onText: (text: string, stats?: Stats, thought?: string) => void;
+  limit?: number;
+  think?: boolean;
+  tools?: ChatCompletionTool[];
+};
+
+// Streams one reply, calling onText with the full text so far, and returns any tool calls the model made
+export async function reply({ turns, signal, onText, limit, think = false, tools }: Request) {
   await load();
   let text = "";
-  const { n_ctx, cpu, ...sampling } = options();
+  let thought = "";
+  const calls: ChatCompletionToolCall[] = [];
+  // Everything left after the app-only settings is passed to the model as sampling
+  const { n_ctx, compute, model: id, think: saved, ...sampling } = options();
   await wllama.createChatCompletion({
     ...sampling,
     ...(limit && { max_tokens: limit }),
     messages: turns,
+    ...(tools?.length && { tools }),
+    ...(active().think && { chat_template_kwargs: { enable_thinking: think } }),
     stream: true,
     abortSignal: signal,
     onData: (chunk) => {
-      text += chunk.choices[0]?.delta.content ?? "";
+      const delta = chunk.choices[0]?.delta as ((typeof chunk.choices)[number]["delta"] & { reasoning_content?: string }) | undefined;
+      text += delta?.content ?? "";
+      thought += delta?.reasoning_content ?? "";
+      // Tool calls arrive in pieces, keyed by index
+      for (const piece of delta?.tool_calls ?? []) {
+        const call = (calls[piece.index] ??= { id: "", type: "function", function: { name: "", arguments: "" } });
+        call.id ||= piece.id ?? "";
+        call.function.name += piece.function?.name ?? "";
+        call.function.arguments += piece.function?.arguments ?? "";
+      }
       const timings = chunk.timings;
-      onText(
-        text,
-        timings && {
-          speed: timings.predicted_per_second,
-          tokens: timings.predicted_n,
-        },
-      );
+      onText(text, timings && { speed: timings.predicted_per_second, tokens: timings.predicted_n }, thought);
     },
   });
+  return calls.filter(Boolean).map((call, index) => ({ ...call, id: call.id || `call_${index}` }));
 }
 
-// Asks the model for a short chat title from the first message
+// Asks the model for a two-word chat title from the first message
 export async function nameChat(text: string, signal: AbortSignal) {
   let out = "";
-  const system = "Write a title of 3 to 5 words for the user's message. Reply with the title only, no quotes or punctuation.\nExample: How do I bake bread -> Baking Bread at Home";
-  await reply([{ role: "system", content: system }, { role: "user", content: text.slice(0, 500) }], signal, (full) => (out = full), 16);
-  return out.split("\n")[0].replace(/^["'\s]+|["'.\s]+$/g, "").slice(0, 40);
+  const system = "Name the user's message with exactly 2 words. Reply with the 2 words only.\nExample: How do I bake bread -> Baking Bread";
+  await exclusive(() =>
+    reply({
+      turns: [
+        { role: "system", content: system },
+        { role: "user", content: text.slice(0, 300) },
+      ],
+      signal,
+      onText: (full) => (out = full),
+      limit: 8,
+    }),
+  );
+  const words = out.split("\n")[0].match(/[\p{L}\p{N}']+/gu) ?? [];
+  return words.slice(0, 2).join(" ");
 }

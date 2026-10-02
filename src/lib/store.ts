@@ -1,8 +1,15 @@
 export type Chat = { id: string; name: string };
+// A tool the model called while answering, with what it returned
+export type Used = { name: string; args: string; result: string; denied?: boolean };
+// A file attached to a message; text is kept when it goes straight into the prompt, and pictures go to the model once, unsaved
+export type Attached = { name: string; text?: string; image?: boolean };
 export type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  thought?: string;
+  tools?: Used[];
+  files?: Attached[];
   speed?: number;
   tokens?: number;
 };
@@ -26,6 +33,7 @@ export function getChats(): Chat[] {
   return chats.length ? chats : [{ id: uid(), name: "Chat" }];
 }
 
+// Saves the chat list
 export const saveChats = (chats: Chat[]) =>
   localStorage.setItem("chatTabs", JSON.stringify(chats));
 
@@ -39,9 +47,11 @@ export function getMessages(id: string): Message[] {
     })) as Message[];
 }
 
+// Saves a chat's messages
 export const saveMessages = (id: string, messages: Message[]) =>
   localStorage.setItem(`chat_${id}`, JSON.stringify(messages));
 
+// Deletes a chat's saved messages
 export function removeChat(id: string) {
   localStorage.removeItem(`chat_${id}`);
   localStorage.removeItem(`chat_meta_${id}`);
@@ -77,10 +87,10 @@ export function trim(messages: Message[], budget = 16_000) {
   return messages.slice(Math.min(start, messages.length - 1));
 }
 
-// Titles a chat from the first five words of a message, until the model names it
-export function title(text: string) {
+// Titles a chat from the first words of a message, until the model names it
+export function title(text: string, count = 5) {
   const words = text.match(/[\p{L}\p{N}']+/gu) ?? [];
-  const start = words.slice(0, 5).join(" ").slice(0, 40);
+  const start = words.slice(0, count).join(" ").slice(0, 40);
   return start ? start[0].toUpperCase() + start.slice(1) : "Chat";
 }
 

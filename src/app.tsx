@@ -5,28 +5,23 @@ import { Onboard } from "@/components/onboard";
 import { Search } from "@/components/search";
 import { Settings } from "@/components/settings";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { load } from "@/lib/llm";
+import { preload } from "@/lib/llm";
+import { useSaved } from "@/lib/saved";
 import { getChats, getMessages, removeChat, saveChats, saveMessages, uid, type Message } from "@/lib/store";
 
-// Reads a localStorage flag
-const flag = (key: string) => localStorage.getItem(key) === "true";
-
 export default function App() {
-  const [onboarded, setOnboarded] = useState(() => flag("onboardingComplete"));
+  const [onboarded, setOnboarded] = useSaved<boolean>("onboardingComplete", false);
   const [chats, setChats] = useState(getChats);
-  const [active, setActive] = useState(() => localStorage.getItem("activeChatId") ?? "");
-  const [name, setName] = useState(() => localStorage.getItem("profileName") ?? "");
-  const [nerd, setNerd] = useState(() => flag("nerdMode"));
+  const [active, setActive] = useSaved<string>("activeChatId", "");
+  const [name, setName] = useSaved<string>("profileName", "");
+  const [nerd, setNerd] = useSaved<boolean>("nerdMode", false);
   const [search, setSearch] = useState(false);
   const [settings, setSettings] = useState(false);
   const chat = chats.find((item) => item.id === active) ?? chats[0];
 
   useEffect(() => saveChats(chats), [chats]);
-  useEffect(() => localStorage.setItem("activeChatId", chat.id), [chat.id]);
-  useEffect(() => localStorage.setItem("profileName", name), [name]);
-  useEffect(() => localStorage.setItem("nerdMode", String(nerd)), [nerd]);
   useEffect(() => {
-    if (onboarded) void load().catch(() => {});
+    if (onboarded) void preload();
   }, [onboarded]);
 
   // Adds a chat, optionally seeded with messages
@@ -72,7 +67,6 @@ export default function App() {
       <Onboard
         onDone={(value) => {
           setName(value);
-          localStorage.setItem("onboardingComplete", "true");
           setOnboarded(true);
         }}
       />
@@ -99,6 +93,7 @@ export default function App() {
           nerd={nerd}
           onTitle={(value) => rename(chat.id, value)}
           onFork={(messages) => add(`${chat.name} (Fork)`, messages)}
+          onNew={fresh}
         />
       </SidebarInset>
       <Search open={search} setOpen={setSearch} chats={chats} onSelect={setActive} />

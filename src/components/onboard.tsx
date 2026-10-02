@@ -6,11 +6,11 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
-import { load, model, useModel } from "@/lib/llm";
+import { preload, useModel } from "@/lib/llm";
 
 export function Onboard({ onDone }: { onDone: (name: string) => void }) {
   const [name, setName] = useState("");
-  const { status, progress, error } = useModel();
+  const { model, status, progress, error } = useModel();
 
   return (
     <main className="flex min-h-dvh items-center justify-center p-4">
@@ -18,7 +18,7 @@ export function Onboard({ onDone }: { onDone: (name: string) => void }) {
         <CardHeader>
           <CardTitle className="text-2xl">Welcome to Locus</CardTitle>
           <CardDescription>
-            Private chat with {model.name}, running in your browser on WebGPU. The {model.size} model downloads once
+            Private chat with {model.name}, running in your browser. The {model.size} model downloads once
             and stays cached.
           </CardDescription>
         </CardHeader>
@@ -46,7 +46,7 @@ export function Onboard({ onDone }: { onDone: (name: string) => void }) {
               Open chat
             </Button>
           ) : (
-            <Button className="w-full" disabled={status === "loading"} onClick={() => void load().catch(() => {})}>
+            <Button className="w-full" disabled={status === "loading"} onClick={() => void preload()}>
               {status === "loading" && <Spinner />}
               {status === "error" ? "Retry" : status === "loading" ? "Downloading…" : "Download model"}
             </Button>
