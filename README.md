@@ -6,6 +6,7 @@ Private AI chat running entirely in the browser. GGUF models execute through [wl
 
 - Local inference, OPFS-cached weights
 - Agentic RAG, hybrid retrieval
+- Long-term memory, saved and searched by the agent
 - Tool calling, per-tool permissions
 - Attachments through AnyDoc, vision
 - Thinking mode, separate stream
@@ -116,7 +117,7 @@ sequenceDiagram
 - The last round offers no tools, forcing an answer
 - Rules (`ask`, `allow`, `deny`) persist in localStorage
 - Stop counts as deny
-- Built-in tools: `search_library`, `calculator`, `datetime`
+- Built-in tools: `search_library`, `save_memory`, `search_memory`, `calculator`, `datetime`
 - Adding a tool is one entry in `tools.ts`
 
 ## Local RAG
@@ -188,6 +189,12 @@ $$
 | Index | Computed per query | Stored per chunk |
 
 Chunks with a score of zero in a list are dropped from that list before fusion. The top 4 fused chunks are returned to the model. Cost per query is one encoder pass plus a linear scan, with no ANN index, which is sound for personal libraries of up to tens of thousands of chunks.
+
+## Memory
+
+- `save_memory` stores one fact in IndexedDB; a near-duplicate replaces the old one
+- The five facts most relevant to each message join the system prompt; `search_memory` finds more
+- Incognito chats never offer `save_memory`; Settings, Embeddings lists and deletes facts
 
 ## Attachments
 

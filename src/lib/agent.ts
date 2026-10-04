@@ -31,9 +31,9 @@ function ask(tool: Tool, args: string, signal: AbortSignal) {
   });
 }
 
-// Runs one tool call if its rule or the user allows it
-async function execute(call: ChatCompletionToolCall, signal: AbortSignal): Promise<Used> {
-  const tool = tools.find((item) => item.name === call.function.name);
+// Runs one offered tool call if its rule or the user allows it
+async function execute(call: ChatCompletionToolCall, offered: Tool[], signal: AbortSignal): Promise<Used> {
+  const tool = offered.find((item) => item.name === call.function.name);
   const used = { name: tool?.label ?? call.function.name, args: call.function.arguments, result: "" };
   if (!tool) return { ...used, result: "Unknown tool." };
   const mode = rule(tool.name);
@@ -52,14 +52,15 @@ type Run = {
   turns: Turn[];
   signal: AbortSignal;
   think: boolean;
+  incognito: boolean;
   onText: Parameters<typeof reply>[0]["onText"];
   onTools: (used: Used[]) => void;
 };
 
 // Lets the model call tools and read their results until it answers
-export const run = ({ turns, signal, think, onText, onTools }: Run) =>
+export const run = ({ turns, signal, think, incognito, onText, onTools }: Run) =>
   exclusive(async () => {
-    const offered = canCallTools() ? tools.filter((tool) => tool.available?.() !== false && rule(tool.name) !== "deny") : [];
+    const offered = canCallTools() ? tools.filter((tool) => tool.available?.() !== false && rule(tool.name) !== "deny" && !(incognito && tool.name === "save_memory")) : [];
     const specs = offered.map(({ name, description, parameters }) => ({ type: "function" as const, function: { name, description, parameters } }));
     const messages = [...turns];
     const used: Used[] = [];
@@ -69,7 +70,7 @@ export const run = ({ turns, signal, think, onText, onTools }: Run) =>
       if (!calls.length) return;
       messages.push({ role: "assistant", content: "", tool_calls: calls });
       for (const call of calls) {
-        const done = await execute(call, signal);
+        const done = await execute(call, offered, signal);
         used.push(done);
         onTools([...used]);
         messages.push({ role: "tool", tool_call_id: call.id, content: done.result });

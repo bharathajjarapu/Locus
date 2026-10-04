@@ -3,7 +3,7 @@ import { all, del, put } from "@/lib/db";
 import { embed } from "@/lib/embed";
 import { bm25, fuse, split } from "@/lib/rank";
 
-type Chunk = { text: string; vector: Float32Array };
+export type Chunk = { text: string; vector: Float32Array };
 type Doc = { id: string; name: string; size: number; chunks: Chunk[] };
 
 // What the library UI shows for each document
@@ -46,24 +46,32 @@ export async function remove(id: string) {
   publish(list);
 }
 
-// Finds the chunks most relevant to a query by keywords and meaning together
-export async function search(query: string, limit = 4) {
-  const chunks = (await load()).flatMap((doc) => doc.chunks.map((chunk) => ({ ...chunk, name: doc.name })));
-  if (!chunks.length) return [];
+// Dot product of two unit vectors, which is their cosine similarity
+export const cosine = (a: Float32Array, b: Float32Array) => a.reduce((sum, value, i) => sum + value * b[i], 0);
+
+// Orders items by keywords and meaning together, keeping the best few
+export async function rank<T extends Chunk>(query: string, items: T[], limit: number) {
+  if (!items.length) return [];
   const [vector] = await embed([query], true);
-  const meaning = chunks.map((chunk) => chunk.vector.reduce((sum, value, i) => sum + value * vector[i], 0));
   const score = fuse([
     bm25(
       query,
-      chunks.map((chunk) => chunk.text),
+      items.map((item) => item.text),
     ),
-    meaning,
+    items.map((item) => cosine(item.vector, vector)),
   ]);
-  return chunks
-    .map((chunk, i) => ({ name: chunk.name, text: chunk.text, score: score[i] }))
+  return items
+    .map((item, i) => ({ item, score: score[i] }))
     .filter((hit) => hit.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+    .slice(0, limit)
+    .map((hit) => hit.item);
+}
+
+// Finds the chunks most relevant to a query
+export async function search(query: string, limit = 4) {
+  const chunks = (await load()).flatMap((doc) => doc.chunks.map((chunk) => ({ ...chunk, name: doc.name })));
+  return rank(query, chunks, limit);
 }
 
 void load();

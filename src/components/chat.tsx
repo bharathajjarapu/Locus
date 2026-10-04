@@ -9,6 +9,7 @@ import { run } from "@/lib/agent";
 import { useAttachments } from "@/lib/attach";
 import { nameChat, useModel, type Turn as Prompt } from "@/lib/llm";
 import { options } from "@/lib/models";
+import { recall } from "@/lib/memory";
 import { system, withFiles } from "@/lib/prompt";
 import { getMessages, greet, saveMessages, title, trim, uid, type Chat as ChatTab, type Message as Entry } from "@/lib/store";
 
@@ -88,10 +89,12 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
         latest = { ...latest, ...patch };
         frame ||= requestAnimationFrame(flush);
       };
+      const facts = await recall(text).catch(() => []);
       await run({
-        turns: [{ role: "system", content: system(name) }, ...turns],
+        turns: [{ role: "system", content: system(name, facts.map((fact) => fact.text)) }, ...turns],
         signal: controller.signal,
         think,
+        incognito,
         onText: (content, stats, thought) => update({ content, thought, ...stats }),
         onTools: (tools) => update({ tools }),
       });

@@ -2,10 +2,10 @@ import type { Message } from "@/lib/store";
 
 export const personaKey = "persona";
 
-// Builds the system prompt, adding the persona the user saved in settings
-export function system(name: string) {
+// Builds the system prompt, adding the persona the user saved in settings and remembered facts
+export function system(name: string, facts: string[] = []) {
   const persona = localStorage.getItem(personaKey)?.trim();
-  return `You are Locus, a helpful assistant running privately in the user's browser. Answer clearly and concisely. Use Markdown when it helps, $...$ for inline math and $$...$$ for display math.${name ? ` The user's name is ${name}.` : ""} Current date: ${new Date().toDateString()}.${persona ? `\n${persona}` : ""}`;
+  return `You are Locus, a helpful assistant running privately in the user's browser. Answer clearly and concisely. Use Markdown when it helps, $...$ for inline math and $$...$$ for display math.${name ? ` The user's name is ${name}.` : ""} Current date: ${new Date().toDateString()}.${persona ? `\n${persona}` : ""}${facts.length ? `\nFacts the user told you in earlier chats, about the user, not you:\n${facts.map((fact) => `- ${fact}`).join("\n")}` : ""}`;
 }
 
 // A message as the model sees it: attached text comes first, then what the user wrote

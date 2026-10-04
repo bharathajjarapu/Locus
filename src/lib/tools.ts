@@ -1,4 +1,5 @@
 import type { ChatCompletionTool } from "@wllama/wllama/esm/index.js";
+import { count as memories, recall, remember } from "@/lib/memory";
 import { count, search } from "@/lib/rag";
 
 export type Tool = {
@@ -25,6 +26,27 @@ export const tools: Tool[] = [
     async run({ query }) {
       const hits = await search(query);
       return hits.length ? hits.map((hit) => `[${hit.name}]\n${hit.text}`).join("\n\n") : "No matching passages found.";
+    },
+  },
+  {
+    name: "save_memory",
+    label: "Save memory",
+    description: "Remember a lasting fact the user told you, such as a preference, name or decision, for future chats. Save one short fact per call, written as \"The user ...\". Never save questions or facts you already know.",
+    parameters: text("fact", "The fact to remember, as one sentence"),
+    async run({ fact }) {
+      if (fact.trim().endsWith("?")) throw new Error("Save facts, not questions");
+      return remember(fact.trim());
+    },
+  },
+  {
+    name: "search_memory",
+    label: "Search memory",
+    description: "Search facts saved from earlier chats. Use it when the answer may depend on what you know about the user.",
+    parameters: text("query", "What to look for"),
+    available: () => memories() > 0,
+    async run({ query }) {
+      const hits = await recall(query);
+      return hits.length ? hits.map((hit) => `- ${hit.text}`).join("\n") : "No matching memories found.";
     },
   },
   {

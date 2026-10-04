@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { FieldGroup } from "@/components/ui/field";
 import { read } from "@/lib/docs";
 import { embedding, useEmbedder } from "@/lib/embed";
+import { forget, useMemory } from "@/lib/memory";
 import { add, remove, useLibrary } from "@/lib/rag";
 
-// Embedding model status and the documents the model can search
+// Embedding model status, and the documents and memories the model can search
 export function Embeddings() {
   const { status, progress } = useEmbedder();
   const { entries, indexing } = useLibrary();
+  const { memories } = useMemory();
   const [problem, setProblem] = useState("");
   const input = useRef<HTMLInputElement>(null);
 
@@ -46,6 +48,14 @@ export function Embeddings() {
               </div>
             </div>
             <Button variant="ghost" size="icon-sm" aria-label={`Delete ${entry.name}`} onClick={() => void remove(entry.id)}>
+              <HugeiconsIcon icon={Delete02Icon} />
+            </Button>
+          </div>
+        ))}
+        {memories.toSorted((a, b) => b.at - a.at).map((memory) => (
+          <div key={memory.id} className="flex items-center gap-3 rounded-lg border p-3">
+            <div className="min-w-0 flex-1 text-sm">{memory.text}</div>
+            <Button variant="ghost" size="icon-sm" aria-label="Delete memory" onClick={() => void forget(memory.id)}>
               <HugeiconsIcon icon={Delete02Icon} />
             </Button>
           </div>

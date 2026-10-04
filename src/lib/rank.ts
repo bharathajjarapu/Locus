@@ -20,7 +20,7 @@ export function split(text: string, size = 1000) {
 const words = (text: string) => text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
 
 // Common words that match everything and say nothing about relevance
-const stop = new Set("a an and are as at be by for from how in is it of on or the to was what when where which who why with".split(" "));
+const stop = new Set("a an and are as at be by for from how i in is it me my of on or the to was what when where which who why with you your".split(" "));
 
 // BM25 keyword score of each text for the query
 export function bm25(query: string, texts: string[]) {
