@@ -1,7 +1,7 @@
 import type { ChatCompletionMessage, ChatCompletionTool, ChatCompletionToolCall } from "@wllama/wllama/esm/index.js";
 import { atom } from "@/lib/atom";
 import { engine } from "@/lib/engine";
-import { find, models, options, setOptions, type Model } from "@/lib/models";
+import { find, models, options, own, setOptions, setOwn, type Model } from "@/lib/models";
 
 export type Turn = ChatCompletionMessage;
 export type Stats = { speed: number; tokens: number };
@@ -23,26 +23,40 @@ export const useModel = store.use;
 let loading: Promise<void> | undefined;
 let gpu = false;
 
+// The OPFS folder holding the dropped model files
+const folder = async (create = false) => (await navigator.storage.getDirectory()).getDirectoryHandle("own", { create });
+
+// Reads the dropped model files back from OPFS
+async function files() {
+  const list: File[] = [];
+  for await (const handle of (await folder()).values()) if (handle.kind === "file") list.push(await handle.getFile());
+  return list;
+}
+
 // Downloads the model once (cached in OPFS afterwards) and loads it on GPU or CPU
 export function load() {
   loading ??= (async () => {
-    const { repo, file, mmproj } = active();
+    const { id, repo, file, mmproj } = active();
     update({ model: active(), status: "loading", progress: 0, error: undefined });
     try {
       const { compute } = options();
       const adapter = compute === "cpu" ? null : await navigator.gpu?.requestAdapter().catch(() => null);
       // ponytail: auto picks GPU by vendor only, since small models run slower on most integrated GPUs; add a speed test if it misjudges
       gpu = !!adapter && (compute === "gpu" || ["nvidia", "apple"].includes(adapter.info?.vendor));
-      await wllama.loadModelFromHF(
-        { repo, file, mmprojFile: mmproj },
-        {
-          n_ctx: options().n_ctx,
-          // wllama defaults to half the cores; all of them decode ~60% faster, but reading images hangs with more than two
-          ...(!gpu && { n_gpu_layers: 0, n_threads: mmproj ? 2 : navigator.hardwareConcurrency }),
-          progressCallback: ({ loaded, total }) => update({ progress: total ? loaded / total : 0 }),
-        },
-      );
-      update({ status: "ready", progress: 1 });
+      const config = {
+        n_ctx: options().n_ctx,
+        // wllama defaults to half the cores; all of them decode ~60% faster, but reading images hangs with more than two
+        ...(!gpu && { n_gpu_layers: 0, n_threads: mmproj ? 2 : navigator.hardwareConcurrency }),
+      };
+      if (id === "own") {
+        await wllama.loadModel(await files(), config);
+        // What a dropped model can do is read from its chat template
+        const template = wllama.getChatTemplate() ?? "";
+        setOwn({ tools: template.includes("tools"), think: template.includes("enable_thinking") });
+      } else {
+        await wllama.loadModelFromHF({ repo, file, mmprojFile: mmproj }, { ...config, progressCallback: ({ loaded, total }) => update({ progress: total ? loaded / total : 0 }) });
+      }
+      update({ model: active(), status: "ready", progress: 1 });
     } catch (error) {
       loading = undefined;
       update({ status: "error", error: String(error) });
@@ -55,16 +69,40 @@ export function load() {
 // Loads without throwing; failures show up in the model state
 export const preload = () => load().catch(() => {});
 
+// Frees the engine after any load in progress finishes, so two loads never share it
+async function unload() {
+  await loading?.catch(() => {});
+  await wllama.exit();
+  loading = undefined;
+}
+
 // Swaps to another model, applying its recommended sampling
 export async function pick(id: string) {
   const next = find(id);
   setOptions({ ...options(), ...next.preset, model: next.id, think: next.think });
-  // Let a load in progress finish first, so two loads never share the engine
-  await loading?.catch(() => {});
-  await wllama.exit();
-  loading = undefined;
+  await unload();
   update({ model: next, think: next.think, status: "idle", progress: 0, error: undefined });
   await preload();
+}
+
+// Copies dropped GGUF files into OPFS and switches to them; an mmproj file among them adds vision
+export async function adopt(dropped: File[]) {
+  const ggufs = dropped.filter((item) => item.name.toLowerCase().endsWith(".gguf"));
+  const main = ggufs.find((item) => !/mmproj/i.test(item.name));
+  if (!main) throw new Error("Drop a .gguf model file");
+  await unload();
+  update({ status: "loading", progress: 0 });
+  try {
+    await remove("own").catch(() => {});
+    const target = await folder(true);
+    for (const item of ggufs) await item.stream().pipeTo(await (await target.getFileHandle(item.name, { create: true })).createWritable());
+  } catch (error) {
+    update({ status: "error", error: String(error) });
+    throw error;
+  }
+  const size = ggufs.reduce((sum, item) => sum + item.size, 0);
+  setOwn({ name: main.name.replace(/\.gguf$/i, ""), size: `${Math.round(size / 1e6)} MB`, mmproj: ggufs.some((item) => item !== main && /mmproj/i.test(item.name)) ? "mmproj" : undefined, tools: false, think: false });
+  await pick("own");
 }
 
 // Turns the model's thinking on or off
@@ -88,11 +126,15 @@ const stored = async () => {
   return models.map((item) => ({ id: item.id, copy: copies.find((entry) => entry.url.includes(item.file)) }));
 };
 
-// Lists the ids of downloaded models
-export const cached = async () => (await stored()).filter((item) => item.copy).map((item) => item.id);
+// Lists the ids of downloaded models, including a dropped one
+export const cached = async () => (await stored()).filter((item) => item.copy).map((item) => item.id).concat(own() ? "own" : []);
 
 // Deletes one model's downloaded weights
 export async function remove(id: string) {
+  if (id === "own") {
+    await (await navigator.storage.getDirectory()).removeEntry("own", { recursive: true });
+    return setOwn(null);
+  }
   await (await stored()).find((item) => item.id === id)?.copy?.remove();
 }
 

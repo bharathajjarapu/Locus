@@ -5,8 +5,8 @@ import { Pick } from "@/components/pick";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Slider } from "@/components/ui/slider";
-import { backend, cached, pick, remove, useModel } from "@/lib/llm";
-import { models, options, useOptions } from "@/lib/models";
+import { adopt, backend, cached, pick, remove, useModel } from "@/lib/llm";
+import { models, options, own, useOptions } from "@/lib/models";
 import { cn } from "@/lib/utils";
 
 // Sampling controls shown as sliders
@@ -29,15 +29,22 @@ export function Model() {
   const { model, status, progress, busy } = useModel();
   const [opts, change] = useOptions(model.id);
   const [saved, setSaved] = useState<string[]>([]);
+  const [problem, setProblem] = useState("");
 
   // Refreshes which models are downloaded
   const refresh = () => void cached().then(setSaved);
   useEffect(refresh, [status, model.id]);
 
+  // Loads GGUF files the user dropped or picked
+  const take = (files: FileList | null) => {
+    setProblem("");
+    if (files?.length && !busy && status !== "loading") adopt([...files]).catch((error: Error) => setProblem(error.message));
+  };
+
   return (
     <FieldGroup>
       <div className="grid gap-2">
-        {models.map((item) => {
+        {models.concat(own() ?? []).map((item) => {
           const current = item.id === model.id;
           const have = saved.includes(item.id);
           return (
@@ -65,6 +72,17 @@ export function Model() {
             </div>
           );
         })}
+        <label
+          className="cursor-pointer rounded-lg border border-dashed p-3 text-center text-sm text-muted-foreground hover:border-primary"
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => {
+            event.preventDefault();
+            take(event.dataTransfer.files);
+          }}
+        >
+          {problem || "Drop a .gguf model here, with its mmproj file for vision, or click to choose"}
+          <input type="file" accept=".gguf" multiple hidden onChange={(event) => take(event.target.files)} />
+        </label>
       </div>
       <Field orientation="horizontal">
         <FieldLabel>Memory</FieldLabel>

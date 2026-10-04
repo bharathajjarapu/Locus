@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Artifact } from "@/components/artifact";
 import { Composer } from "@/components/composer";
 import { Header } from "@/components/header";
 import { Permit } from "@/components/permit";
@@ -11,7 +12,8 @@ import { nameChat, useModel, type Turn as Prompt } from "@/lib/llm";
 import { options } from "@/lib/models";
 import { recall } from "@/lib/memory";
 import { system, withFiles } from "@/lib/prompt";
-import { getMessages, greet, saveMessages, title, trim, uid, type Chat as ChatTab, type Message as Entry } from "@/lib/store";
+import { getMessages, greet, markdown, saveMessages, title, trim, uid, type Chat as ChatTab, type Message as Entry } from "@/lib/store";
+import { download } from "@/lib/utils";
 
 type Props = {
   chat: ChatTab;
@@ -119,6 +121,15 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
     }
   }
 
+  // Downloads this chat as Markdown or a standalone HTML page
+  async function share(format: string) {
+    const text = markdown(chat.name, messages);
+    if (format === "md") return download(`${chat.name}.md`, text, "text/markdown");
+    const { escape, render } = await import("@/components/markdown");
+    const style = "body{max-width:48rem;margin:2rem auto;padding:0 1rem;font:16px/1.6 system-ui,sans-serif;color-scheme:light dark}pre{overflow:auto;padding:1rem;border-radius:.5rem;background:#8882}";
+    download(`${chat.name}.html`, `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape(chat.name)}</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.19.0/dist/katex.min.css"><style>${style}</style>${render(text).replace(/<button[^>]*data-preview[^>]*>Preview<\/button>/g, "")}`, "text/html");
+  }
+
   const empty = messages.length === 0;
   const composer = (
     <Composer
@@ -136,7 +147,8 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
 
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-      <Header incognito={incognito} setIncognito={setIncognito} empty={empty} onNew={onNew} />
+      <Artifact />
+      <Header incognito={incognito} setIncognito={setIncognito} empty={empty} onNew={onNew} onShare={(format) => void share(format)} />
 
       <div
         ref={scroller}

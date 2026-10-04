@@ -24,8 +24,18 @@ export const models: Model[] = [
   { id: "vl", name: "LFM2.5 VL 450M", size: "332 MB", repo: "LiquidAI/LFM2.5-VL-450M-GGUF", file: "LFM2.5-VL-450M-Q4_K_M.gguf", mmproj: "mmproj-LFM2.5-VL-450m-Q8_0.gguf", think: false, tools: false, note: "Sees images, fast", preset: liquid },
 ];
 
+// GGUF files the user dropped in; the weights live in OPFS and the details in localStorage
+export function own(): Model | undefined {
+  const saved = localStorage.getItem("ownModel");
+  return saved ? { id: "own", repo: "", file: "", think: false, tools: false, note: "Your file", preset: cpm, ...JSON.parse(saved) } : undefined;
+}
+
+// Saves the dropped model's details, or forgets them with null
+export const setOwn = (patch: Partial<Model> | null) =>
+  patch ? localStorage.setItem("ownModel", JSON.stringify({ ...own(), ...patch })) : localStorage.removeItem("ownModel");
+
 // Looks up a model by id, falling back to the first
-export const find = (id: string) => models.find((item) => item.id === id) ?? models[0];
+export const find = (id: string) => (id === "own" && own()) || models.find((item) => item.id === id) || models[0];
 
 export const defaults = { ...liquid, n_ctx: 8192, compute: "auto" as "auto" | "gpu" | "cpu", model: "lfm", think: false };
 type Options = typeof defaults;

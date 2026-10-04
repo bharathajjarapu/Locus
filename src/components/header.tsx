@@ -1,5 +1,6 @@
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Add01Icon, GhostIcon, Moon02Icon, Sun03Icon } from "@hugeicons/core-free-icons";
+import { Add01Icon, GhostIcon, Moon02Icon, Share08Icon, Sun03Icon } from "@hugeicons/core-free-icons";
+import { Pick } from "@/components/pick";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSaved } from "@/lib/saved";
@@ -9,10 +10,16 @@ type Props = {
   setIncognito: (value: boolean) => void;
   empty: boolean;
   onNew: () => void;
+  onShare: (format: string) => void;
 };
 
+const formats = [
+  { value: "md", label: "Markdown" },
+  { value: "html", label: "HTML page" },
+];
+
 // Top bar floating over the chat
-export function Header({ incognito, setIncognito, empty, onNew }: Props) {
+export function Header({ incognito, setIncognito, empty, onNew, onShare }: Props) {
   const [dark, setDark] = useSaved<boolean>("darkMode", true);
 
   // Switches theme with a crossfade where supported
@@ -32,10 +39,14 @@ export function Header({ incognito, setIncognito, empty, onNew }: Props) {
         </Button>
       </div>
       <div className="ml-auto flex items-center gap-1">
-        {empty && (
+        {empty ? (
           <Button variant={incognito ? "secondary" : "ghost"} size="icon-lg" aria-label="Incognito" onClick={() => setIncognito(!incognito)}>
             <HugeiconsIcon icon={GhostIcon} />
           </Button>
+        ) : (
+          <Pick label="Share chat" compact items={formats} value="" onChange={onShare}>
+            <HugeiconsIcon icon={Share08Icon} />
+          </Pick>
         )}
         <Button variant="ghost" size="icon-lg" aria-label={dark ? "Light mode" : "Dark mode"} onClick={toggle}>
           <HugeiconsIcon icon={dark ? Sun03Icon : Moon02Icon} />

@@ -77,6 +77,10 @@ export function importAll(backup: Backup): Chat[] {
   return backup.chatTabs;
 }
 
+// Writes a chat as Markdown, one heading per speaker
+export const markdown = (name: string, messages: Message[]) =>
+  `# ${name}\n\n${messages.map((message) => `## ${message.role === "user" ? "You" : "Locus"}\n\n${message.content}`).join("\n\n")}\n`;
+
 // Keeps the newest messages that fit the prompt budget
 export function trim(messages: Message[], budget = 16_000) {
   let size = 0;

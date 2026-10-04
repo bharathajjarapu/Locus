@@ -7,12 +7,16 @@ Private AI chat running entirely in the browser. GGUF models execute through [wl
 - Local inference, OPFS-cached weights
 - Agentic RAG, hybrid retrieval
 - Long-term memory, saved and searched by the agent
+- Web search and fetch, TinyFish or DuckDuckGo
+- Artifacts, sandboxed live preview
+- Bring your own GGUF, drag and drop
 - Tool calling, per-tool permissions
 - Attachments through AnyDoc, vision
 - Thinking mode, separate stream
 - Markdown, KaTeX, code highlighting
 - Chat fork, edit, retry, incognito
 - Voice dictation, backup export
+- Chat sharing, Markdown or HTML
 
 ## Models
 
@@ -24,6 +28,13 @@ Private AI chat running entirely in the browser. GGUF models execute through [wl
 
 A model is one row in `src/lib/models.ts`: repo, file, optional `mmproj`, capability flags, sampling preset.
 
+### Your own model
+
+- Drop a `.gguf` in Settings, Model, with its `mmproj` file for vision
+- Files are copied to OPFS, so they survive reloads without a download
+- Loaded with `loadModel`; tool and thinking support are read from the chat template
+- One dropped model at a time; a new drop replaces it
+
 ## Architecture
 
 ```mermaid
@@ -32,6 +43,11 @@ flowchart LR
   Agent --> LLM["llm.ts"]
   Agent --> Tools["tools.ts"]
   Tools --> RAG["rag.ts"]
+  Tools --> Memory["memory.ts"]
+  Tools --> Web["web.ts"]
+  Web --> Net["TinyFish, DuckDuckGo"]
+  Memory --> Embed
+  Memory --> DB
   RAG --> Embed["embed.ts"]
   RAG --> DB[("IndexedDB")]
   LLM --> W1["chat model"]
@@ -73,6 +89,8 @@ sequenceDiagram
 | Call | Use |
 | --- | --- |
 | `loadModelFromHF` | Weights and optional `mmproj` image encoder |
+| `loadModel` | Dropped GGUF files read back from OPFS |
+| `getChatTemplate` | Detects tools and thinking on a dropped model |
 | `createChatCompletion` | Streaming, tool specs, `AbortSignal` stop |
 | `chat_template_kwargs.enable_thinking` | Toggles the reasoning block |
 | `delta.reasoning_content` | Thought stream, shown separately |
@@ -117,7 +135,7 @@ sequenceDiagram
 - The last round offers no tools, forcing an answer
 - Rules (`ask`, `allow`, `deny`) persist in localStorage
 - Stop counts as deny
-- Built-in tools: `search_library`, `save_memory`, `search_memory`, `calculator`, `datetime`
+- Built-in tools: `search_library`, `save_memory`, `search_memory`, `search_web`, `fetch_page`, `calculator`, `datetime`
 - Adding a tool is one entry in `tools.ts`
 
 ## Local RAG
@@ -195,6 +213,25 @@ Chunks with a score of zero in a list are dropped from that list before fusion. 
 - `save_memory` stores one fact in IndexedDB; a near-duplicate replaces the old one
 - The five facts most relevant to each message join the system prompt; `search_memory` finds more
 - Incognito chats never offer `save_memory`; Settings, Embeddings lists and deletes facts
+
+## Web
+
+- `search_web` returns the top 5 results; `fetch_page` returns a page as Markdown, cut to 6000 characters
+- With a TinyFish API key (free at agent.tinyfish.ai, pasted in Settings, Tools), both use TinyFish Search and Fetch
+- Without a key, or if TinyFish fails, search reads DuckDuckGo's HTML results and fetch reads the page, both through the free Jina reader, since DuckDuckGo and most sites block browser requests
+- These are the only calls besides model downloads, and each one runs under the tool's permission rule
+
+## Artifacts
+
+- The system prompt asks for one complete `html` block when the user wants a page, app, game, chart or drawing
+- `html` and `svg` code blocks get a Preview button that opens the viewer
+- The page runs in an iframe sandboxed without `allow-same-origin`, so it cannot read chats, keys or memory
+- Preview and Code tabs, plus download as an `.html` file
+
+## Sharing
+
+- The header's share menu downloads the open chat as Markdown or a standalone HTML page
+- The HTML page reuses the chat's renderer, with math and code, and needs no app to open
 
 ## Attachments
 

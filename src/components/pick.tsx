@@ -15,9 +15,9 @@ type Props<T> = {
   children?: ReactNode;
 };
 
-// Dropdown for choosing one of a few fixed options; children replace the trigger text, restart offers a reload
+// Dropdown for choosing one of a few fixed options; children replace the trigger text, restart offers a reload, and a value outside items makes it a menu
 export function Pick<T extends string | number>({ items, value, onChange, label, compact, disabled, restart, children }: Props<T>) {
-  const item = items.find((entry) => entry.value === value) ?? items[0];
+  const item = items.find((entry) => entry.value === value) ?? null;
   return (
     <>
       {restart && (
@@ -34,7 +34,7 @@ export function Pick<T extends string | number>({ items, value, onChange, label,
         onValueChange={(next) => next && next.value !== value && onChange(next.value)}
       >
         <ComboboxTrigger render={<Button variant={compact ? "ghost" : "outline"} size={compact ? "sm" : "default"} aria-label={label} className="disabled:opacity-100" />}>
-          {children ?? item.label}
+          {children ?? item?.label}
         </ComboboxTrigger>
         <ComboboxContent side={compact ? "top" : "bottom"} align="end" className="w-auto min-w-0">
           <ComboboxList>

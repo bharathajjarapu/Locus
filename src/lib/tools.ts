@@ -1,6 +1,7 @@
 import type { ChatCompletionTool } from "@wllama/wllama/esm/index.js";
 import { count as memories, recall, remember } from "@/lib/memory";
 import { count, search } from "@/lib/rag";
+import { find, read } from "@/lib/web";
 
 export type Tool = {
   name: string;
@@ -48,6 +49,23 @@ export const tools: Tool[] = [
       const hits = await recall(query);
       return hits.length ? hits.map((hit) => `- ${hit.text}`).join("\n") : "No matching memories found.";
     },
+  },
+  {
+    name: "search_web",
+    label: "Search web",
+    description: "Search the web for current or unknown information. Returns titles, links and snippets.",
+    parameters: text("query", "What to search for"),
+    async run({ query }) {
+      const hits = await find(query);
+      return hits.length ? hits.map((hit) => `[${hit.title}](${hit.url})\n${hit.snippet}`).join("\n\n") : "No results found.";
+    },
+  },
+  {
+    name: "fetch_page",
+    label: "Fetch page",
+    description: "Read a web page as text. Use it on a link from search_web or one the user gave.",
+    parameters: text("url", "The full address of the page"),
+    run: ({ url }) => read(url.trim()),
   },
   {
     name: "calculator",

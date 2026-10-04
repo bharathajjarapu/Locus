@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { options, useOptions } from "@/lib/models";
 import { exportAll, importAll, type Chat } from "@/lib/store";
+import { download } from "@/lib/utils";
 
 const computes = [
   { value: "auto", label: "Auto" },
@@ -31,15 +32,6 @@ export function General({ name, setName, nerd, setNerd, chats, setChats }: Props
   const [opts, change] = useOptions();
   const [problem, setProblem] = useState("");
   const file = useRef<HTMLInputElement>(null);
-
-  // Downloads every chat as a JSON file
-  function download() {
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob([JSON.stringify(exportAll(chats), null, 2)], { type: "application/json" }));
-    link.download = `locus-${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    URL.revokeObjectURL(link.href);
-  }
 
   // Restores chats from a chosen backup file
   async function upload(event: ChangeEvent<HTMLInputElement>) {
@@ -77,7 +69,7 @@ export function General({ name, setName, nerd, setNerd, chats, setChats }: Props
           <FieldLabel>Backup</FieldLabel>
           <FieldDescription>Export chats or restore them from a backup file.</FieldDescription>
         </FieldContent>
-        <Button variant="outline" size="sm" onClick={download}>
+        <Button variant="outline" size="sm" onClick={() => download(`locus-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(exportAll(chats), null, 2), "application/json")}>
           Export
         </Button>
         <Button variant="outline" size="sm" onClick={() => file.current?.click()}>

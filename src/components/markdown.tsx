@@ -19,6 +19,7 @@ import "prismjs/components/prism-go";
 import "prismjs/components/prism-java";
 import "prismjs/components/prism-sql";
 import "prismjs/components/prism-yaml";
+import { show } from "@/components/artifact";
 
 const aliases: Record<string, string> = {
   ts: "typescript",
@@ -28,12 +29,13 @@ const aliases: Record<string, string> = {
   shell: "bash",
   html: "markup",
   xml: "markup",
+  svg: "markup",
   rs: "rust",
   yml: "yaml",
 };
 
 // Escapes text for safe use inside HTML
-const escape = (text: string) => text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
+export const escape = (text: string) => text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 
 marked.use({
   gfm: true,
@@ -50,13 +52,15 @@ marked.use({
       const id = aliases[name] ?? name;
       const grammar = Prism.languages[id];
       const html = grammar ? Prism.highlight(text, grammar, id) : escape(text);
-      return `<pre class="language-${escape(id)}"><code>${html}</code></pre>`;
+      const pre = `<pre class="language-${escape(id)}"><code>${html}</code></pre>`;
+      // Web pages and drawings get a button that opens them live in the artifact viewer
+      return name === "html" || name === "svg" ? `<div class="relative">${pre}<button type="button" data-preview class="absolute top-2 right-2 rounded-md bg-background px-2 py-1 text-xs font-medium shadow-sm">Preview</button></div>` : pre;
     },
   },
 });
 
 // Renders markdown with KaTeX math kept out of marked's way
-function render(source: string) {
+export function render(source: string) {
   const math: string[] = [];
   const stash = (tex: string, display: boolean) => {
     math.push(katex.renderToString(tex.trim(), { displayMode: display, throwOnError: false }));
@@ -77,5 +81,14 @@ function render(source: string) {
 
 export default memo(function Markdown({ text }: { text: string }) {
   const html = useMemo(() => render(text), [text]);
-  return <div className="prose max-w-none dark:prose-invert prose-code:before:content-none prose-code:after:content-none" dangerouslySetInnerHTML={{ __html: html }} />;
+  return (
+    <div
+      className="prose max-w-none dark:prose-invert prose-code:before:content-none prose-code:after:content-none"
+      dangerouslySetInnerHTML={{ __html: html }}
+      onClick={(event) => {
+        const button = (event.target as Element).closest("[data-preview]");
+        if (button) show(button.previousElementSibling?.textContent ?? "");
+      }}
+    />
+  );
 });
