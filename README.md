@@ -145,7 +145,7 @@ sequenceDiagram
 - The last round offers no tools, forcing an answer
 - Rules (`ask`, `allow`, `deny`) persist in localStorage
 - Stop counts as deny
-- Built-in tools: `search_library`, `save_memory`, `search_memory`, `search_web`, `fetch_page`, `calculator`, `datetime`
+- Built-in tools: `search_library`, `save_memory`, `search_memory`, `search_web`, `fetch_page`, `ask_user`, `calculator`, `datetime`
 - Adding a tool is one entry in `tools.ts`
 
 ## Local RAG

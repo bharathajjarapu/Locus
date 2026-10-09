@@ -1,4 +1,5 @@
 import type { ChatCompletionTool } from "@wllama/wllama/esm/index.js";
+import { atom } from "@/lib/atom";
 import { count as memories, recall, remember } from "@/lib/memory";
 import { count, search } from "@/lib/rag";
 import { passage } from "@/lib/prompt";
@@ -12,11 +13,15 @@ export type Tool = {
   parameters: ChatCompletionTool["function"]["parameters"];
   // Hidden from the model while this returns false
   available?: () => boolean;
-  run: (args: Record<string, string>) => Promise<string | { text: string; sources: Source[] }>;
+  run: (args: Record<string, string>, signal: AbortSignal) => Promise<string | { text: string; sources: Source[] }>;
 };
 
 // JSON schema for a tool that takes one text argument
 const text = (key: string, description: string) => ({ type: "object" as const, properties: { [key]: { type: "string", description } }, required: [key] });
+
+type Ask = { question: string; options: string[]; answer: (text: string) => void };
+const asking = atom({ ask: null as Ask | null });
+export const useAsk = asking.use;
 
 // Add a tool by adding an entry here; the agent, permissions and settings pick it up
 export const tools: Tool[] = [
@@ -71,6 +76,30 @@ export const tools: Tool[] = [
     description: "Read a web page as text. Use it on a link from search_web or one the user gave.",
     parameters: text("url", "The full address of the page"),
     run: ({ url }) => read(url.trim()),
+  },
+  {
+    name: "ask_user",
+    label: "Ask you",
+    description: "Ask the user a question when you need their choice or missing details before you can answer well. Offer short options when there are clear choices.",
+    parameters: {
+      type: "object",
+      properties: {
+        question: { type: "string", description: "The question to ask" },
+        options: { type: "array", items: { type: "string" }, description: "Up to 4 short answers to pick from; leave out for a free answer" },
+      },
+      required: ["question"],
+    },
+    // Waits for the user's answer in a dialog; stopping the chat skips it
+    run: ({ question, options = "" }, signal) => new Promise((resolve) => {
+      const answer = (text: string) => {
+        signal.removeEventListener("abort", skip);
+        asking.set({ ask: null });
+        resolve(text ? `The user answered: ${text}` : "The user skipped the question.");
+      };
+      const skip = () => answer("");
+      signal.addEventListener("abort", skip, { once: true });
+      asking.set({ ask: { question, options: options.split("\n").map((item) => item.trim()).filter(Boolean).slice(0, 4), answer } });
+    }),
   },
   {
     name: "calculator",

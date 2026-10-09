@@ -3,6 +3,7 @@ import { Artifact } from "@/components/artifact";
 import { Composer } from "@/components/composer";
 import { Header } from "@/components/header";
 import { Permit } from "@/components/permit";
+import { Question } from "@/components/question";
 import { Turn } from "@/components/turn";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
@@ -215,6 +216,7 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
           <div className="pointer-events-none absolute inset-x-0 bottom-0 px-4 pb-4">
             <div className="pointer-events-auto mx-auto max-w-3xl">
               <Permit />
+              <Question />
               {composer}
             </div>
           </div>

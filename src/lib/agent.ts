@@ -41,8 +41,8 @@ async function execute(call: ChatCompletionToolCall, offered: Tool[], signal: Ab
   if (choice === "deny") return { ...used, result: "The user denied this tool call.", denied: true };
   if (choice === "always") setRule(tool.name, "allow");
   try {
-    const args = Object.fromEntries(Object.entries(JSON.parse(used.args || "{}")).map(([key, value]) => [key, String(value)]));
-    const result = await tool.run(args);
+    const args = Object.fromEntries(Object.entries(JSON.parse(used.args || "{}")).map(([key, value]) => [key, Array.isArray(value) ? value.join("\n") : String(value)]));
+    const result = await tool.run(args, signal);
     return typeof result === "string" ? { ...used, result } : { ...used, result: result.text, sources: result.sources };
   } catch (error) {
     return { ...used, result: `Error: ${(error as Error).message}` };

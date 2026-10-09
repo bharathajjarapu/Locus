@@ -33,6 +33,53 @@ async function files() {
   return list;
 }
 
+const part = 16 << 20;
+
+// Downloads files as parallel 16 MB ranges kept in OPFS, so a broken download resumes, then hands them to wllama's cache
+async function grab(urls: string[]) {
+  if ((await wllama.modelManager.getModels()).some((item) => item.url === urls[0])) return;
+  const cache = wllama.modelManager.cacheManager;
+  const parts = await (await navigator.storage.getDirectory()).getDirectoryHandle("parts", { create: true });
+  const queue: (() => Promise<void>)[] = [];
+  let done = 0;
+  let total = 0;
+  const files = await Promise.all(urls.map(async (url) => {
+    const head = await fetch(url, { method: "HEAD" });
+    const size = Number(head.headers.get("content-length"));
+    if (!head.ok || !size) throw new Error(`Download failed (${head.status}). Try again.`);
+    const name = await cache.getNameFromURL(url);
+    const dir = await parts.getDirectoryHandle(name, { create: true });
+    const count = Math.ceil(size / part);
+    total += size;
+    for (let index = 0; index < count; index++) {
+      const start = index * part;
+      const length = Math.min(part, size - start);
+      const saved = await dir.getFileHandle(String(index)).then((handle) => handle.getFile()).catch(() => null);
+      if (saved?.size === length) { done += length; continue; }
+      queue.push(async () => {
+        const response = await fetch(url, { headers: { Range: `bytes=${start}-${start + length - 1}` } });
+        const bytes = await response.arrayBuffer();
+        if (!response.ok || bytes.byteLength !== length) throw new Error(`Download failed (${response.status}). Retry to resume.`);
+        const writable = await (await dir.getFileHandle(String(index), { create: true })).createWritable();
+        await writable.write(bytes);
+        await writable.close();
+        done += length;
+        update({ progress: done / total });
+      });
+    }
+    return { url, name, dir, size, count };
+  }));
+  update({ progress: done / total });
+  // Six lanes pull ranges at once; a failure empties the queue so the others stop
+  const lane = async () => { for (let job; (job = queue.shift()); ) await job().catch((error) => { queue.length = 0; throw error; }); };
+  await Promise.all(Array.from({ length: 6 }, lane));
+  for (const { url, name, dir, size, count } of files) {
+    const blobs = await Promise.all(Array.from({ length: count }, async (_, index) => (await dir.getFileHandle(String(index))).getFile()));
+    await cache.write(name, new Blob(blobs).stream(), { originalURL: url, originalSize: size, etag: "", mmprojURL: urls[1] });
+    await parts.removeEntry(name, { recursive: true });
+  }
+}
+
 // Downloads the model once (cached in OPFS afterwards) and loads it on GPU or CPU
 export function load() {
   loading ??= (async () => {
@@ -54,7 +101,9 @@ export function load() {
         const template = wllama.getChatTemplate() ?? "";
         setOwn({ tools: template.includes("tools"), think: template.includes("enable_thinking") });
       } else {
-        await wllama.loadModelFromHF({ repo, file, mmprojFile: mmproj }, { ...config, progressCallback: ({ loaded, total }) => update({ progress: total ? loaded / total : 0 }) });
+        const urls = [file, mmproj].filter(Boolean).map((name) => `https://huggingface.co/${repo}/resolve/main/${name}`);
+        await grab(urls);
+        await wllama.loadModelFromUrl({ url: urls[0], mmprojUrl: urls[1] }, config);
       }
       update({ model: active(), status: "ready", progress: 1 });
     } catch (error) {
