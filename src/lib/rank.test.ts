@@ -1,14 +1,14 @@
 // Run with: bun src/lib/rank.test.ts
-import { bm25, fuse, split } from "./rank";
+import { bm25, fuse, spans } from "./rank";
 
 // Throws when two values differ
 const equal = (actual: unknown, expected: unknown) => {
   if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error(`${JSON.stringify(actual)} !== ${JSON.stringify(expected)}`);
 };
 
-equal(split("a\n\nb").length, 1);
-equal(split("x".repeat(2500)).map((chunk) => chunk.length), [1000, 1000, 500]);
-equal(split("   "), []);
+equal(spans("a\n\nb").length, 1);
+equal(spans("x".repeat(2500)).map((chunk) => chunk.text.length), [1000, 1000, 500]);
+equal(spans("   "), []);
 
 const texts = ["plants make food from sunlight", "the stock market rose", "sunlight and water feed plants"];
 const keyword = bm25("plants sunlight", texts);

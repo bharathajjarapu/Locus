@@ -1,8 +1,9 @@
 export type Chat = { id: string; name: string };
+export type Source = { id: string; doc: string; name: string; chunk: number; text: string; page?: number; start?: number; end?: number; scanned?: boolean };
 // A tool the model called while answering, with what it returned
-export type Used = { name: string; args: string; result: string; denied?: boolean };
+export type Used = { name: string; args: string; result: string; denied?: boolean; sources?: Source[] };
 // A file attached to a message; text is kept when it goes straight into the prompt, and pictures go to the model once, unsaved
-export type Attached = { name: string; text?: string; image?: boolean };
+export type Attached = { name: string; text?: string; image?: boolean; sources?: Source[] };
 export type Message = {
   id: string;
   role: "user" | "assistant";
@@ -10,6 +11,7 @@ export type Message = {
   thought?: string;
   tools?: Used[];
   files?: Attached[];
+  sources?: Source[];
   speed?: number;
   tokens?: number;
 };

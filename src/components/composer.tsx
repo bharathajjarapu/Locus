@@ -3,6 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { AiBrain01Icon, ArrowUp02Icon, Attachment01Icon, Mic01Icon, StopIcon } from "@hugeicons/core-free-icons";
 import { Chip } from "@/components/chip";
 import { Pick } from "@/components/pick";
+import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from "@/components/ui/group";
@@ -33,7 +34,7 @@ export const frame =
 export function Composer({ input, setInput, busy, tall, files, onAttach, onDetach, onSend, onStop }: Props) {
   const { model, think, status, progress, error } = useModel();
   const speech = useSpeech((text) => setInput((value) => `${value} ${text}`.trim()));
-  const failed = status === "error";
+  const failed = status === "error" && !speech.error;
   const problem = failed ? error : speech.error;
   const [dragging, setDragging] = useState(false);
   const picker = useRef<HTMLInputElement>(null);
@@ -78,7 +79,7 @@ export function Composer({ input, setInput, busy, tall, files, onAttach, onDetac
         <InputGroupButton variant="default" size="icon-sm" aria-label="Stop" onClick={onStop}>
           <HugeiconsIcon icon={StopIcon} />
         </InputGroupButton>
-      ) : input.trim() ? (
+      ) : input.trim() && !speech.listening ? (
         <InputGroupButton variant="default" size="icon-sm" aria-label="Send" disabled={reading} onClick={onSend}>
           <HugeiconsIcon icon={ArrowUp02Icon} />
         </InputGroupButton>
@@ -86,11 +87,12 @@ export function Composer({ input, setInput, busy, tall, files, onAttach, onDetac
         <InputGroupButton
           variant={speech.listening ? "destructive" : "ghost"}
           size="icon-sm"
-
           aria-label={speech.listening ? "Stop dictation" : "Dictate"}
+          aria-pressed={speech.listening}
+          title={speech.status || (speech.listening ? "Stop dictation" : "Dictate in English")}
           onClick={speech.listen}
         >
-          {speech.listening ? <HugeiconsIcon icon={StopIcon} /> : <HugeiconsIcon icon={Mic01Icon} />}
+          {speech.status ? <Spinner /> : <HugeiconsIcon icon={speech.listening ? StopIcon : Mic01Icon} />}
         </InputGroupButton>
       )}
     </>
@@ -106,7 +108,8 @@ export function Composer({ input, setInput, busy, tall, files, onAttach, onDetac
       onKeyDown={(event) => {
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
-          if (!busy && !reading) onSend();
+          if (speech.listening) void speech.listen();
+          else if (!busy && !reading) onSend();
         }
       }}
     />
@@ -114,6 +117,7 @@ export function Composer({ input, setInput, busy, tall, files, onAttach, onDetac
 
   return (
     <div className="w-full space-y-2">
+      {speech.listening && <p role="status" className="text-sm text-muted-foreground">{speech.status || "Listening…"}</p>}
       {problem && (
         <Alert variant={failed ? "destructive" : "default"}>
           <AlertDescription>{problem}</AlertDescription>

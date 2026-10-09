@@ -148,6 +148,21 @@ export async function exclusive<T>(task: () => Promise<T>) {
   }
 }
 
+// Measures a short reply with the loaded model without touching chat history.
+export async function measure(signal: AbortSignal) {
+  if (get().busy || get().status !== "ready") throw new Error("Load an idle model before running the check.");
+  let stats: Stats | undefined;
+  await exclusive(() => reply({
+    turns: [{ role: "user", content: "Write the numbers from 1 to 64, separated by spaces." }],
+    signal,
+    limit: 64,
+    onText: (_text, result) => { if (result) stats = result; },
+  }));
+  if (signal.aborted) throw new DOMException("Check cancelled", "AbortError");
+  if (!stats || !Number.isFinite(stats.speed) || stats.speed <= 0 || stats.tokens <= 0) throw new Error("No token speed was measured. Try again.");
+  return { ...stats, backend: backend(), model: get().model.name };
+}
+
 type Request = {
   turns: Turn[];
   signal: AbortSignal;

@@ -42,7 +42,8 @@ async function execute(call: ChatCompletionToolCall, offered: Tool[], signal: Ab
   if (choice === "always") setRule(tool.name, "allow");
   try {
     const args = Object.fromEntries(Object.entries(JSON.parse(used.args || "{}")).map(([key, value]) => [key, String(value)]));
-    return { ...used, result: await tool.run(args) };
+    const result = await tool.run(args);
+    return typeof result === "string" ? { ...used, result } : { ...used, result: result.text, sources: result.sources };
   } catch (error) {
     return { ...used, result: `Error: ${(error as Error).message}` };
   }

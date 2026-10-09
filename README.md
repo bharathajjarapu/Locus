@@ -6,6 +6,7 @@ Private AI chat running entirely in the browser. GGUF models execute through [wl
 
 - Local inference, OPFS-cached weights
 - Agentic RAG, hybrid retrieval
+- Clickable document citations, original PDF split viewer and exact cited passages
 - Long-term memory, saved and searched by the agent
 - Web search and fetch, TinyFish or DuckDuckGo
 - Artifacts, sandboxed live preview
@@ -15,7 +16,8 @@ Private AI chat running entirely in the browser. GGUF models execute through [wl
 - Thinking mode, separate stream
 - Markdown, KaTeX, code highlighting
 - Chat fork, edit, retry, incognito
-- Voice dictation, backup export
+- Local English voice dictation with Moonshine Tiny Q8, backup export
+- Read aloud beside Copy, local sanoTTS English voices; downloads on first use
 - Chat sharing, Markdown or HTML
 
 ## Models
@@ -62,6 +64,14 @@ flowchart LR
 ```
 
 Each model runs in its own wllama instance and worker, so chat, embedding and image reading run concurrently. The picker swaps only the chat model.
+
+Voice dictation uses Moonshine Tiny Q8 through a separate single-thread CrispASR WASM worker, without ONNX or WebGPU. The microphone downloads 33.9 MB of weights and a 0.25 MB tokenizer on first use, then caches them in Cache Storage. Phrases are transcribed after a pause or at 13 seconds; Stop finishes the final phrase, and clicking again cancels. Stopping or leaving the composer releases the microphone and worker memory. Microphone access requires HTTPS or localhost.
+
+The vendored MIT runtime in `public/moonshine` comes from [CrisperWeaver commit ffa562b](https://github.com/CrispStrobe/CrisperWeaver/tree/ffa562b2cfd26bc0bb423255e4f832c6cd7098eb/web/wasm/crispasr-small), built from CrispASR `70e15c9a0`. Model assets are pinned to [cstr/moonshine-tiny-GGUF revision f9d70fd](https://huggingface.co/cstr/moonshine-tiny-GGUF/tree/f9d70fd5b08609291b0e1e41a69eed04e3f30009). The runtime adds 11.2 MB and used about 443 MiB of WASM memory in a desktop browser test.
+
+Settings → Voice selects the read-aloud voice and playback speed, previews speech, deletes cached Moonshine weights, and unloads read-aloud weights from memory. Heart nano is the smallest default. Playback speed also changes pitch.
+
+Settings → Models uses one picker with sampling controls collapsed. Run check measures up to 64 generated tokens with the loaded model and current backend, without changing chat history. The check can be cancelled; its result applies to that model and device, rather than predicting speed for other models.
 
 ## Wllama integration
 
@@ -139,6 +149,21 @@ sequenceDiagram
 - Adding a tool is one entry in `tools.ts`
 
 ## Local RAG
+
+New PDF uploads keep their original file in IndexedDB, alongside page numbers and passage offsets. Clicking an answer's numbered citation or opening **Sources** shows the whole PDF in a continuous scroll pane beside chat and jumps to the highlighted passage. The **Cited passage** tab shows the exact text supplied to the model. Page dimensions preserve the scroll layout; only nearby pages render, off-screen canvases are released, and closing the viewer releases its PDF worker. Small attachments go into the prompt with source links without loading the embedder; larger files use `search_library` with a tool-capable model such as MiniCPM5.
+
+Word and PowerPoint files convert to formatted Markdown in a worker. Their document preview, and Markdown uploads, retain the complete text rather than rebuilding it from retrieval chunks. Headings, tables, code blocks and slide sections render with the existing Markdown component; Office previews do not reproduce the original page or slide layout. Older uploads fall back to their saved chunks.
+
+Scanned pages keep their OCR passage and page number, but the current OCR has no word coordinates, so those pages show an explicit note instead of a guessed highlight. Older PDF uploads need re-uploading to retain their original file. Deleting a document removes its original PDF; saved replies retain the quoted passage. Chat backups contain citations but do not include PDF files.
+
+To check manually:
+
+1. Run `bun dev`, upload a fresh PDF with selectable text, and ask a specific question about a sentence in it. For a long PDF, select MiniCPM5 and allow Search library.
+2. Click the small numbered citation, or expand Sources and select one. Confirm chat stays on the left and the original PDF opens on the cited page with yellow highlights.
+3. Compare the Cited passage tab with the highlighted text. Scroll through the whole PDF, then press Cited passage above the pages to return to the highlight. Try a citation on a different page. On a desktop, try Expand document and Narrow document; the PDF should fit the pane and keep its highlight aligned. After browsing away, click the same citation again and confirm it returns to the highlighted passage.
+4. Reload and reopen the saved citation. Resize to a phone width, then close the viewer and confirm chat remains usable.
+5. Delete the document in Settings → Embeddings, then reopen its citation. The viewer should report the missing document while preserving Cited passage.
+6. Upload Word, PowerPoint and Markdown files. Open their citations and confirm Document preserves headings, tables and the final section or slide; Cited passage retains the exact excerpt.
 
 ```mermaid
 flowchart TB
@@ -274,6 +299,9 @@ bun dev
 bun run check
 bun src/lib/store.test.ts
 bun src/lib/rank.test.ts
+bun src/lib/speech.test.ts
+bun src/components/model.test.tsx
+bun src/lib/source.test.ts
 ```
 
 ### Runtime
@@ -317,3 +345,5 @@ which is why Q4 and Q8 quantisation, rather than more threads, set the ceiling. 
 ## License
 
 [MIT](LICENSE) © Bharath Ajjarapu
+
+Read aloud uses [sanotts-web](https://github.com/ampixa/sanoTTS), licensed GPL-3.0-or-later. Its WASM runtime is served locally; voice weights are fetched from Hugging Face with the upstream host as a fallback. Message text stays in the browser.

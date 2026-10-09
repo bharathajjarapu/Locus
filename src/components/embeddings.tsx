@@ -23,7 +23,10 @@ export function Embeddings() {
     event.target.value = "";
     setProblem("");
     try {
-      for (const file of files) await add(file.name, await read(file));
+      for (const file of files) {
+        const content = await read(file);
+        await add(file.name, content.text, content.pages ? { file, pages: content.pages } : undefined);
+      }
     } catch (error) {
       setProblem(String(error));
     }

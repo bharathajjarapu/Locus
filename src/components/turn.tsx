@@ -1,13 +1,15 @@
-import { lazy, Suspense, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowUp02Icon, Cancel01Icon, Copy01Icon, GitForkIcon, PencilEdit01Icon, RefreshIcon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { ArrowUp02Icon, Cancel01Icon, Copy01Icon, GitForkIcon, PencilEdit01Icon, RefreshIcon, StopIcon, Tick02Icon, VolumeHighIcon } from "@hugeicons/core-free-icons";
 import { Chip } from "@/components/chip";
 import { frame } from "@/components/composer";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from "@/components/ui/group";
 import { Message, MessageContent, MessageFooter } from "@/components/ui/message";
-import type { Message as Entry } from "@/lib/store";
+import { Spinner } from "@/components/ui/spinner";
+import { speak, stop, useVoice } from "@/lib/speech";
+import type { Message as Entry, Source } from "@/lib/store";
 
 // Markdown pulls in KaTeX and Prism, so it loads after first paint
 const Markdown = lazy(() => import("@/components/markdown"));
@@ -26,6 +28,7 @@ type Props = {
   onEdit: (text: string) => void;
   onFork: () => void;
   onRetry: () => void;
+  onSource: (source: Source) => void;
 };
 
 // Copies text and briefly shows a tick
@@ -58,9 +61,12 @@ function Fold({ label, open, children }: { label: ReactNode; open?: boolean; chi
 }
 
 // One message in the chat, either from the user or the model
-export function Turn({ message, last, busy, nerd, think, onEdit, onFork, onRetry }: Props) {
+export function Turn({ message, last, busy, nerd, think, onEdit, onFork, onRetry, onSource }: Props) {
   const [draft, setDraft] = useState<string | null>(null);
+  const voice = useVoice();
+  const reading = voice.id === message.id && voice.playing;
   const waiting = busy && last && !message.content;
+  useEffect(() => () => stop(message.id), [message.id, message.content]);
 
   if (message.role === "user") {
     return (
@@ -135,16 +141,35 @@ export function Turn({ message, last, busy, nerd, think, onEdit, onFork, onRetry
             ))}
             {message.content ? (
               <Suspense fallback={<p className="whitespace-pre-wrap">{message.content}</p>}>
-                <Markdown text={message.content} />
+                <Markdown text={message.content} sources={message.sources} onSource={onSource} />
               </Suspense>
             ) : (
               !message.thought && !think && <span className="shimmer">Thinking…</span>
             )}
           </BubbleContent>
         </Bubble>
+        {!!message.sources?.length && (
+          <details className="mt-2 text-sm">
+            <summary className="cursor-pointer text-muted-foreground">Sources · {message.sources.length}</summary>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {message.sources.map((source, index) => <Button key={source.id} variant="outline" size="sm" className="h-auto max-w-full whitespace-normal text-left" onClick={() => onSource(source)}>{index + 1}. {source.name}{source.page ? ` · p. ${source.page}` : ""}</Button>)}
+            </div>
+          </details>
+        )}
         {!(busy && last) && (
-          <MessageFooter className={actions}>
+          <MessageFooter className={reading ? "gap-0.5" : actions}>
             <Copy text={message.content} />
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={reading ? "Stop reading" : "Read aloud"}
+              title={reading ? "Stop reading" : "Read aloud"}
+              aria-pressed={reading}
+              disabled={!message.content.trim()}
+              onClick={() => reading ? stop(message.id) : void speak(message.id, message.content)}
+            >
+              {reading && voice.loading ? <Spinner aria-label="Loading voice" /> : <HugeiconsIcon icon={reading ? StopIcon : VolumeHighIcon} />}
+            </Button>
             <Button variant="ghost" size="icon-sm" aria-label="Fork" onClick={onFork}>
               <HugeiconsIcon icon={GitForkIcon} />
             </Button>
@@ -158,6 +183,7 @@ export function Turn({ message, last, busy, nerd, think, onEdit, onFork, onRetry
             )}
           </MessageFooter>
         )}
+        {voice.id === message.id && voice.error && <p role="alert" className="text-sm text-destructive">{voice.error}</p>}
       </MessageContent>
     </Message>
   );

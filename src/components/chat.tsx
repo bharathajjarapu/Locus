@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Artifact } from "@/components/artifact";
 import { Composer } from "@/components/composer";
 import { Header } from "@/components/header";
@@ -12,7 +12,8 @@ import { nameChat, useModel, type Turn as Prompt } from "@/lib/llm";
 import { options } from "@/lib/models";
 import { recall } from "@/lib/memory";
 import { system, withFiles } from "@/lib/prompt";
-import { getMessages, greet, markdown, saveMessages, title, trim, uid, type Chat as ChatTab, type Message as Entry } from "@/lib/store";
+import { getMessages, greet, markdown, saveMessages, title, trim, uid, type Chat as ChatTab, type Message as Entry, type Source as Citation } from "@/lib/store";
+import { useMobile } from "@/lib/mobile";
 import { download } from "@/lib/utils";
 
 type Props = {
@@ -25,6 +26,7 @@ type Props = {
 };
 
 const prompts = ["Explain a concept like I'm new to it", "Draft a concise follow-up email", "Give me three ideas for a weekend project", "Summarize the pros and cons of remote work"];
+const Source = lazy(() => import("@/components/source"));
 
 export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
   const [messages, setMessages] = useState(() => getMessages(chat.id));
@@ -36,6 +38,18 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
   const stick = useRef(true);
   const { think } = useModel();
   const attachments = useAttachments();
+  const [source, setSource] = useState<Citation | null>(null);
+  const opener = useRef<HTMLElement | null>(null);
+  const mobile = useMobile();
+
+  // Opens a passage while remembering where keyboard focus should return.
+  function open(source: Citation) {
+    opener.current = document.activeElement as HTMLElement;
+    setSource({ ...source });
+  }
+
+  // Closes the viewer and restores focus to the citation.
+  function close() { setSource(null); requestAnimationFrame(() => opener.current?.focus()); }
 
   useEffect(() => {
     if (!busy && !incognito) saveMessages(chat.id, messages);
@@ -56,7 +70,8 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
     const files = isNew ? attachments.ready() : messages[cut]?.files;
     const images = isNew ? attachments.images() : [];
     const history: Entry[] = [...messages.slice(0, cut), { id: uid(), role: "user", content: text, ...(files?.length && { files }) }];
-    const answer: Entry = { id: uid(), role: "assistant", content: "" };
+    const sources = files?.flatMap((file) => file.sources ?? []) ?? [];
+    const answer: Entry = { id: uid(), role: "assistant", content: "", ...(sources.length && { sources }) };
     let latest = answer;
     let frame = 0;
     const flush = () => {
@@ -98,7 +113,7 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
         think,
         incognito,
         onText: (content, stats, thought) => update({ content, thought, ...stats }),
-        onTools: (tools) => update({ tools }),
+        onTools: (tools) => update({ tools, sources: [...new Map([...sources, ...tools.flatMap((tool) => tool.sources ?? [])].map((source) => [source.id, source])).values()] }),
       });
     } catch (error) {
       if ((error as Error).name !== "AbortError") {
@@ -146,62 +161,66 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
   );
 
   return (
-    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-      <Artifact />
-      <Header incognito={incognito} setIncognito={setIncognito} empty={empty} onNew={onNew} onShare={(format) => void share(format)} />
+    <div className="relative flex min-h-0 min-w-0 flex-1">
+      <div inert={!!source && mobile} className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+        <Artifact />
+        <Header incognito={incognito} setIncognito={setIncognito} empty={empty} onNew={onNew} onShare={(format) => void share(format)} />
 
-      <div
-        ref={scroller}
-        className={`absolute inset-0 overflow-y-auto p-4 pt-16 ${empty ? "" : "fade pb-28"}`}
-        onScroll={(event) => {
-          const element = event.currentTarget;
-          stick.current = element.scrollHeight - element.scrollTop - element.clientHeight < 96;
-        }}
-      >
-        {empty ? (
-          <Empty className="h-full">
-            <EmptyHeader>
-              <EmptyTitle className="text-3xl">{incognito ? "Incognito" : greet(name)}</EmptyTitle>
-              <EmptyDescription>{incognito ? "This chat won't be saved." : "Ask anything. Everything stays on your device."}</EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent className="max-w-2xl">
+        <div
+          ref={scroller}
+          className={`absolute inset-0 overflow-y-auto p-4 pt-16 ${empty ? "" : "fade pb-28"}`}
+          onScroll={(event) => {
+            const element = event.currentTarget;
+            stick.current = element.scrollHeight - element.scrollTop - element.clientHeight < 96;
+          }}
+        >
+          {empty ? (
+            <Empty className="h-full">
+              <EmptyHeader>
+                <EmptyTitle className="text-3xl">{incognito ? "Incognito" : greet(name)}</EmptyTitle>
+                <EmptyDescription>{incognito ? "This chat won't be saved." : "Ask anything. Everything stays on your device."}</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent className="max-w-2xl">
+                {composer}
+                <div className="grid w-full gap-2 sm:grid-cols-2">
+                  {prompts.map((prompt) => (
+                    <Button key={prompt} variant="outline" className="h-auto justify-start py-2 text-left whitespace-normal" onClick={() => setInput(() => prompt)}>
+                      {prompt}
+                    </Button>
+                  ))}
+                </div>
+              </EmptyContent>
+            </Empty>
+          ) : (
+            <div className="mx-auto flex max-w-3xl flex-col gap-6">
+              {messages.map((message, index) => (
+                <Turn
+                  key={message.id}
+                  message={message}
+                  last={index === messages.length - 1}
+                  busy={busy}
+                  nerd={nerd}
+                  think={think}
+                  onSource={open}
+                  onEdit={(text) => void send(text, index)}
+                  onFork={() => onFork(messages.slice(0, index + 1))}
+                  onRetry={() => void send(messages[index - 1].content, index - 1)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {!empty && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 px-4 pb-4">
+            <div className="pointer-events-auto mx-auto max-w-3xl">
+              <Permit />
               {composer}
-              <div className="grid w-full gap-2 sm:grid-cols-2">
-                {prompts.map((prompt) => (
-                  <Button key={prompt} variant="outline" className="h-auto justify-start py-2 text-left whitespace-normal" onClick={() => setInput(() => prompt)}>
-                    {prompt}
-                  </Button>
-                ))}
-              </div>
-            </EmptyContent>
-          </Empty>
-        ) : (
-          <div className="mx-auto flex max-w-3xl flex-col gap-6">
-            {messages.map((message, index) => (
-              <Turn
-                key={message.id}
-                message={message}
-                last={index === messages.length - 1}
-                busy={busy}
-                nerd={nerd}
-                think={think}
-                onEdit={(text) => void send(text, index)}
-                onFork={() => onFork(messages.slice(0, index + 1))}
-                onRetry={() => void send(messages[index - 1].content, index - 1)}
-              />
-            ))}
+            </div>
           </div>
         )}
       </div>
-
-      {!empty && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 px-4 pb-4">
-          <div className="pointer-events-auto mx-auto max-w-3xl">
-            <Permit />
-            {composer}
-          </div>
-        </div>
-      )}
+    {source && <Suspense fallback={<p role="status" className="absolute inset-0 z-30 bg-background p-4 md:static md:w-[45%]">Loading document…</p>}><Source source={source} onClose={close} /></Suspense>}
     </div>
   );
 }

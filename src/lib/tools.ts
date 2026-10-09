@@ -2,6 +2,7 @@ import type { ChatCompletionTool } from "@wllama/wllama/esm/index.js";
 import { count as memories, recall, remember } from "@/lib/memory";
 import { count, search } from "@/lib/rag";
 import { find, read } from "@/lib/web";
+import type { Source } from "@/lib/store";
 
 export type Tool = {
   name: string;
@@ -10,7 +11,7 @@ export type Tool = {
   parameters: ChatCompletionTool["function"]["parameters"];
   // Hidden from the model while this returns false
   available?: () => boolean;
-  run: (args: Record<string, string>) => Promise<string>;
+  run: (args: Record<string, string>) => Promise<string | { text: string; sources: Source[] }>;
 };
 
 // JSON schema for a tool that takes one text argument
@@ -21,12 +22,15 @@ export const tools: Tool[] = [
   {
     name: "search_library",
     label: "Search library",
-    description: "Search the user's uploaded documents. Use it when the answer may be in their files.",
+    description: "Search the user's uploaded documents. Cite passages using the exact locus: links returned by this tool.",
     parameters: text("query", "What to look for"),
     available: () => count() > 0,
     async run({ query }) {
       const hits = await search(query);
-      return hits.length ? hits.map((hit) => `[${hit.name}]\n${hit.text}`).join("\n\n") : "No matching passages found.";
+      return hits.length ? {
+        text: hits.map((hit) => `[${hit.name}${hit.page ? `, page ${hit.page}` : ""}](locus:${hit.id})\n${hit.text}`).join("\n\n"),
+        sources: hits.map(({ vector, ...hit }) => hit),
+      } : "No matching passages found.";
     },
   },
   {

@@ -124,6 +124,78 @@
   display: none;
 }
 
+/* pdf.js text runs overlay the canvas for selection and exact passage positions. */
+.pdf-text {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  line-height: 1;
+  text-align: initial;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-size-adjust: none;
+  transform-origin: 0 0;
+  --min-font-size: 1;
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+.pdf-text :is(span, br) {
+  position: absolute;
+  color: transparent;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0 0;
+}
+.pdf-text > :not(.markedContent), .pdf-text .markedContent span:not(.markedContent) {
+  --font-height: 0;
+  --scale-x: 1;
+  --rotate: 0deg;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+.pdf-text .markedContent { display: contents; }
+.pdf-text[data-main-rotation="90"] { transform: rotate(90deg) translateY(-100%); }
+.pdf-text[data-main-rotation="180"] { transform: rotate(180deg) translate(-100%, -100%); }
+.pdf-text[data-main-rotation="270"] { transform: rotate(270deg) translateX(-100%); }
+
+/* Converted files stay readable on white sheets in either app theme. */
+.paper-page { margin-bottom: 1rem; }
+.paper {
+  margin-inline: auto;
+  max-width: none;
+  padding: 48px;
+  background: white;
+  box-shadow: 0 1px 6px #00000014;
+  color: #262626;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  overflow-wrap: anywhere;
+  --tw-prose-headings: #171717;
+  --tw-prose-body: #262626;
+  --tw-prose-bold: #171717;
+  --tw-prose-links: #1d4ed8;
+  --tw-prose-code: #171717;
+  --tw-prose-quotes: #404040;
+  --tw-prose-counters: #737373;
+  --tw-prose-bullets: #737373;
+  --tw-prose-th-borders: #d4d4d4;
+  --tw-prose-td-borders: #e5e5e5;
+  --tw-prose-quote-borders: #d4d4d4;
+  --tw-prose-hr: #e5e5e5;
+}
+.paper > :first-child { margin-top: 0; }
+.paper > :last-child { margin-bottom: 0; }
+.paper :is(pre, code) { white-space: pre-wrap; }
+.paper pre { background: #f5f5f5; }
+.paper pre, .paper pre .token { color: #262626; text-shadow: none; }
+.paper .token:is(.keyword, .boolean) { color: #7e22ce; }
+.paper .token:is(.string, .number) { color: #a16207; }
+.paper .token.comment { color: #737373; }
+.paper [data-preview] { display: none; }
+.paper img { max-width: 100%; }
+.paper-page mark[data-highlight] { background: #fde68a; color: inherit; }
+
 /* Text that fills left to right as --p goes from 0% to 100% */
 .fill {
   background: linear-gradient(90deg, var(--foreground) var(--p), var(--muted-foreground) var(--p));

@@ -1,6 +1,7 @@
 import { Slider as SliderPrimitive } from "@base-ui/react/slider"
 import { cn } from "@/lib/utils"
 
+// Renders one labelled thumb per value.
 function Slider({
   className,
   defaultValue,
@@ -9,11 +10,8 @@ function Slider({
   max = 100,
   ...props
 }: SliderPrimitive.Root.Props) {
-  const _values = Array.isArray(value)
-    ? value
-    : Array.isArray(defaultValue)
-      ? defaultValue
-      : [min, max]
+  const selection = value ?? defaultValue ?? [min, max]
+  const values = Array.isArray(selection) ? selection : [selection]
 
   return (
     <SliderPrimitive.Root
@@ -36,10 +34,11 @@ function Slider({
             className="bg-primary select-none data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full"
           />
         </SliderPrimitive.Track>
-        {Array.from({ length: _values.length }, (_, index) => (
+        {Array.from({ length: values.length }, (_, index) => (
           <SliderPrimitive.Thumb
             data-slot="slider-thumb"
             key={index}
+            aria-label={props["aria-label"]}
             className="relative block size-3 shrink-0 rounded-full border border-ring bg-white ring-ring/50 transition-[color,box-shadow] select-none after:absolute after:-inset-2 hover:ring-3 focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 disabled:pointer-events-none disabled:opacity-50"
           />
         ))}

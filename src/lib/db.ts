@@ -23,6 +23,9 @@ async function run<T>(table: string, mode: IDBTransactionMode, action: (store: I
 // Reads every stored document
 export const all = <T>(table = "docs") => run<T[]>(table, "readonly", (store) => store.getAll());
 
+// Reads one stored document without loading the whole library.
+export const get = <T>(id: string, table = "docs") => run<T | undefined>(table, "readonly", (store) => store.get(id));
+
 // Saves a document, replacing one with the same id
 export const put = (doc: { id: string }, table = "docs") => run(table, "readwrite", (store) => store.put(doc));
 

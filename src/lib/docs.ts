@@ -1,5 +1,4 @@
-import init, { formatFromBytes, toDocument, toMarkdownBytes } from "@firecrawl/anydoc-wasm";
-import { render, text } from "@/lib/pdf";
+import { extract, render, type Page } from "@/lib/pdf";
 import { ocr } from "@/lib/vision";
 
 // Plain-text files are read as they are
@@ -8,31 +7,46 @@ const plain = /\.(txt|md|markdown|json|csv|tsv|js|jsx|ts|tsx|py|rs|go|java|c|cpp
 const most = 15;
 // Embedded pictures smaller than this are icons and logos, not content
 const small = 20_000;
+type Office = { text: string; pictures: { data: Uint8Array; mediaType: string }[] } | { pdf: Uint8Array };
+
+// Converts an Office file in a disposable worker so large files cannot block chat.
+function office(bytes: Uint8Array): Promise<Office> {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL("./docs.worker.ts", import.meta.url), { type: "module" });
+    worker.onmessage = ({ data }: MessageEvent<Office | { error: string }>) => {
+      worker.terminate();
+      if ("error" in data) reject(new Error(data.error)); else resolve(data);
+    };
+    worker.onerror = (event) => { worker.terminate(); reject(new Error(event.message || "Could not read this document")); };
+    worker.postMessage({ bytes, most, small }, [bytes.buffer]);
+  });
+}
 
 // Joins page texts under page headings
-const pages = (numbers: number[], texts: string[]) => numbers.map((number, index) => `## Page ${number}\n\n${texts[index]}`).join("\n\n");
+const pages = (items: Page[]) => items.map((page) => `## Page ${page.number}\n\n${page.text}`).join("\n\n");
 
-// Turns a file of any supported kind into text: office documents and PDFs through AnyDoc, pictures and scanned pages through the vision model
-export async function read(file: File) {
-  if (file.type.startsWith("image/")) return (await ocr([file]))[0];
-  if (file.type.startsWith("text/") || plain.test(file.name)) return file.text();
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  await init();
-  try {
-    const markdown = toMarkdownBytes(bytes);
-    // AnyDoc keeps pictures inside documents but cannot read them; PDFs have no document model
-    const pictures = (formatFromBytes(bytes) === "pdf" ? [] : toDocument(bytes).assets).filter((asset) => asset.mediaType.startsWith("image/") && asset.data.length > small).slice(0, most);
-    if (!pictures.length) return markdown;
-    const texts = await ocr(pictures.map((asset) => new Blob([asset.data as Uint8Array<ArrayBuffer>], { type: asset.mediaType })));
-    return `${markdown}\n\n${texts.map((value, index) => `## Picture ${index + 1}\n\n${value}`).join("\n\n")}`;
-  } catch (error) {
-    const { code, pages: scanned, pageCount } = error as { code?: string; pages: number[]; pageCount: number };
-    if (code !== "needsOcr") throw error;
-    // Scanned pages go to the vision model, the rest keep their text layer
-    const shown = scanned.slice(0, most);
-    const typed = Array.from({ length: pageCount }, (_, index) => index + 1).filter((number) => !scanned.includes(number));
-    const [seen, written] = [await ocr(await render(bytes, shown)), await text(bytes, typed)];
-    const all = [...shown, ...typed].sort((a, b) => a - b);
-    return pages(all, all.map((number) => (shown.includes(number) ? seen[shown.indexOf(number)] : written[typed.indexOf(number)])));
+// Keeps PDF page positions, using OCR only for pages without a text layer.
+async function pdf(bytes: Uint8Array) {
+  const items = await extract(bytes);
+  const scanned = items.filter((page) => page.scanned).slice(0, most);
+  if (scanned.length) {
+    const texts = await ocr(await render(bytes, scanned.map((page) => page.number)));
+    scanned.forEach((page, index) => { page.text = texts[index]; });
   }
+  if (!items.some((page) => page.text.trim())) throw new Error("No readable text");
+  return { text: pages(items), pages: items };
+}
+
+// Extracts office text with AnyDoc and PDF page text with pdf.js or OCR.
+export async function read(file: File): Promise<{ text: string; pages?: Page[] }> {
+  if (file.type.startsWith("image/")) return { text: (await ocr([file]))[0] };
+  if (file.type.startsWith("text/") || plain.test(file.name)) return { text: await file.text() };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) return pdf(bytes);
+  const content = await office(bytes);
+  if ("pdf" in content) return pdf(content.pdf);
+  const { text, pictures } = content;
+  if (!pictures.length) return { text };
+  const texts = await ocr(pictures.map((asset) => new Blob([asset.data as Uint8Array<ArrayBuffer>], { type: asset.mediaType })));
+  return { text: `${text}\n\n${texts.map((value, index) => `## Picture ${index + 1}\n\n${value}`).join("\n\n")}` };
 }

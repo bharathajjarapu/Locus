@@ -2,9 +2,9 @@ import { useState } from "react";
 import { read } from "@/lib/docs";
 import { canSee } from "@/lib/llm";
 import { add } from "@/lib/rag";
-import { uid, type Attached } from "@/lib/store";
+import { uid, type Attached, type Source } from "@/lib/store";
 
-export type Attachment = { id: string; name: string; status: "reading" | "indexing" | "ready" | "failed"; text?: string; image?: Blob; error?: string };
+export type Attachment = { id: string; name: string; status: "reading" | "indexing" | "ready" | "failed"; text?: string; image?: Blob; error?: string; sources?: Source[] };
 
 // Longest text that goes straight into the prompt; longer files are saved to the library for the model to search
 const inline = 4000;
@@ -26,14 +26,13 @@ export function useAttachments() {
         continue;
       }
       try {
-        const text = (await read(file)).trim();
-        if (!text) throw new Error("No readable text");
-        if (text.length <= inline) patch(id, { status: "ready", text });
-        else {
-          patch(id, { status: "indexing" });
-          await add(file.name, text);
-          patch(id, { status: "ready" });
-        }
+        const content = await read(file);
+        const text = content.text;
+        if (!text.trim()) throw new Error("No readable text");
+        patch(id, { status: "indexing" });
+        const short = text.length <= inline;
+        const sources = await add(file.name, text, content.pages ? { file, pages: content.pages } : undefined, short);
+        patch(id, { status: "ready", ...(short && { text, sources }) });
       } catch (error) {
         patch(id, { status: "failed", error: (error as Error).message });
       }
@@ -48,7 +47,7 @@ export function useAttachments() {
     // Whether any file is still being read
     busy: files.some((file) => file.status === "reading" || file.status === "indexing"),
     // The files that can be sent with the message
-    ready: (): Attached[] => files.filter((file) => file.status === "ready").map(({ name, text, image }) => ({ name, text, ...(image && { image: true }) })),
+    ready: (): Attached[] => files.filter((file) => file.status === "ready").map(({ name, text, image, sources }) => ({ name, text, ...(sources?.length && { sources }), ...(image && { image: true }) })),
     // The pictures to show the model with the next message
     images: () => files.flatMap((file) => (file.image ? [file.image] : [])),
   };

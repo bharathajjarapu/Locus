@@ -8,12 +8,14 @@ import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
 import { preload, useModel } from "@/lib/llm";
 
+// Downloads the first model and welcomes the user.
 export function Onboard({ onDone }: { onDone: (name: string) => void }) {
   const [name, setName] = useState("");
   const { model, status, progress, error } = useModel();
 
   return (
-    <main className="flex min-h-dvh items-center justify-center p-4">
+    <main className="relative isolate flex min-h-dvh items-center justify-center p-4">
+      <img src="/math.jpg" alt="" width={2400} height={1600} className="pointer-events-none fixed inset-0 -z-10 h-dvh w-full object-cover opacity-10 invert mask-b-from-40% dark:opacity-15 dark:invert-0" />
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Welcome to Locus</CardTitle>

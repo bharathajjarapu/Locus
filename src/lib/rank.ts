@@ -1,8 +1,8 @@
 // Pure text ranking helpers for the document library
 
 // Splits text into ~1,000-character chunks, ending at a paragraph or sentence break when one is near
-export function split(text: string, size = 1000) {
-  const chunks: string[] = [];
+export function spans(text: string, size = 1000) {
+  const chunks: { text: string; start: number; end: number }[] = [];
   for (let start = 0; start < text.length;) {
     let end = Math.min(text.length, start + size);
     if (end < text.length) {
@@ -10,7 +10,12 @@ export function split(text: string, size = 1000) {
       const sentence = text.lastIndexOf(". ", end) + 1;
       end = paragraph > start + size / 2 ? paragraph : sentence > start + size / 2 ? sentence : end;
     }
-    if (text.slice(start, end).trim()) chunks.push(text.slice(start, end).trim());
+    const value = text.slice(start, end);
+    const content = value.trim();
+    if (content) {
+      const offset = start + value.indexOf(content);
+      chunks.push({ text: content, start: offset, end: offset + content.length });
+    }
     start = end;
   }
   return chunks;

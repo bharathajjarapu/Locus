@@ -27,6 +27,7 @@ export function Pick<T extends string | number>({ items, value, onChange, label,
       )}
       <Combobox
         items={items}
+        filter={null}
         value={item}
         disabled={disabled}
         itemToStringLabel={(entry) => entry.label}
