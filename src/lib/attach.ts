@@ -44,8 +44,6 @@ export function useAttachments() {
     attach,
     detach: (id: string) => setFiles((list) => list.filter((file) => file.id !== id)),
     clear: () => setFiles([]),
-    // Whether any file is still being read
-    busy: files.some((file) => file.status === "reading" || file.status === "indexing"),
     // The files that can be sent with the message
     ready: (): Attached[] => files.filter((file) => file.status === "ready").map(({ name, text, image, sources }) => ({ name, text, ...(sources?.length && { sources }), ...(image && { image: true }) })),
     // The pictures to show the model with the next message

@@ -1,6 +1,7 @@
 import type { ChatCompletionTool } from "@wllama/wllama/esm/index.js";
 import { count as memories, recall, remember } from "@/lib/memory";
 import { count, search } from "@/lib/rag";
+import { passage } from "@/lib/prompt";
 import { find, read } from "@/lib/web";
 import type { Source } from "@/lib/store";
 
@@ -28,7 +29,7 @@ export const tools: Tool[] = [
     async run({ query }) {
       const hits = await search(query);
       return hits.length ? {
-        text: hits.map((hit) => `[${hit.name}${hit.page ? `, page ${hit.page}` : ""}](locus:${hit.id})\n${hit.text}`).join("\n\n"),
+        text: hits.map(passage).join("\n\n"),
         sources: hits.map(({ vector, ...hit }) => hit),
       } : "No matching passages found.";
     },

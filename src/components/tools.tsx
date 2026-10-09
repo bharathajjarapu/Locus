@@ -1,5 +1,5 @@
 import { Pick } from "@/components/pick";
-import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useModel } from "@/lib/llm";
 import { rule, setRule, useRules } from "@/lib/rules";
@@ -23,15 +23,11 @@ export function Tools() {
       {!model.tools && <FieldDescription>{model.name} can't call tools. Switch to a model that can.</FieldDescription>}
       <Field>
         <FieldLabel htmlFor="tinyfish">TinyFish API key</FieldLabel>
-        <Input id="tinyfish" type="password" value={key} placeholder="Optional" autoComplete="off" onChange={(event) => setKey(event.target.value)} />
-        <FieldDescription>Search and fetch use TinyFish with a free key from agent.tinyfish.ai, or DuckDuckGo without one.</FieldDescription>
+        <Input id="tinyfish" type="password" value={key} placeholder="Optional · free at agent.tinyfish.ai" autoComplete="off" onChange={(event) => setKey(event.target.value)} />
       </Field>
       {tools.map((tool) => (
         <Field key={tool.name} orientation="horizontal">
-          <FieldContent>
-            <FieldLabel>{tool.label}</FieldLabel>
-            <FieldDescription>{tool.description}</FieldDescription>
-          </FieldContent>
+          <FieldLabel>{tool.label}</FieldLabel>
           <Pick label={tool.label} items={choices} value={rule(tool.name)} onChange={(value) => setRule(tool.name, value)} />
         </Field>
       ))}

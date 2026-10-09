@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { atom } from "./atom";
 
 export const speakers = [
-  { value: "heartnano", label: "Heart nano · smallest" },
   { value: "amy", label: "Amy" },
   { value: "kristin", label: "Kristin" },
   { value: "hfc", label: "HFC" },
@@ -24,6 +23,23 @@ export async function storedVoice() {
     return response ? (await response.blob()).size : 0;
   }));
   return sizes.reduce((sum, size) => sum + size, 0);
+}
+
+// Downloads dictation weights into the cache without loading the model.
+export function fetchVoice() {
+  return new Promise<void>((resolve, reject) => {
+    const worker = new Worker(`${import.meta.env.BASE_URL}moonshine/worker.js`);
+    worker.onmessage = ({ data }) => {
+      worker.terminate();
+      if (data.type === "fetched") resolve();
+      else reject(new Error(data.error));
+    };
+    worker.onerror = () => {
+      worker.terminate();
+      reject(new Error("Download failed. Try again."));
+    };
+    worker.postMessage({ type: "fetch" });
+  });
 }
 
 // Deletes the dictation download when the microphone is idle.
@@ -82,8 +98,8 @@ export async function speak(id: string, text: string) {
     const pending = engine;
     const tts = await pending;
     if (current !== run) return;
-    const selected = localStorage.getItem("speaker") ?? "heartnano";
-    const speaker = speakers.some((item) => item.value === selected) ? selected : "heartnano";
+    const selected = localStorage.getItem("speaker") ?? speakers[0].value;
+    const speaker = speakers.some((item) => item.value === selected) ? selected : speakers[0].value;
     const bundle = await tts.loadVoice(speaker);
     if (engine === pending) voice.set({ sizes: { ...voice.get().sizes, [speaker]: bundle.front.byteLength + bundle.dec.byteLength } });
     if (current !== run) return;

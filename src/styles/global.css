@@ -108,6 +108,11 @@
   }
 }
 
+/* Scrolls without showing a scrollbar */
+@utility no-scrollbar {
+  scrollbar-width: none;
+}
+
 /* Chat edges fade under the top bar and composer, only across the chat column, with the scrollbar hidden */
 .fade {
   --col: min(48rem, calc(100% - 2rem));

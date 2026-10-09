@@ -69,7 +69,7 @@ Voice dictation uses Moonshine Tiny Q8 through a separate single-thread CrispASR
 
 The vendored MIT runtime in `public/moonshine` comes from [CrisperWeaver commit ffa562b](https://github.com/CrispStrobe/CrisperWeaver/tree/ffa562b2cfd26bc0bb423255e4f832c6cd7098eb/web/wasm/crispasr-small), built from CrispASR `70e15c9a0`. Model assets are pinned to [cstr/moonshine-tiny-GGUF revision f9d70fd](https://huggingface.co/cstr/moonshine-tiny-GGUF/tree/f9d70fd5b08609291b0e1e41a69eed04e3f30009). The runtime adds 11.2 MB and used about 443 MiB of WASM memory in a desktop browser test.
 
-Settings → Voice selects the read-aloud voice and playback speed, previews speech, deletes cached Moonshine weights, and unloads read-aloud weights from memory. Heart nano is the smallest default. Playback speed also changes pitch.
+Settings → Models selects the read-aloud voice and playback speed, previews speech, deletes cached Moonshine weights, and unloads read-aloud weights from memory. Amy is the default voice. Playback speed also changes pitch.
 
 Settings → Models uses one picker with sampling controls collapsed. Run check measures up to 64 generated tokens with the loaded model and current backend, without changing chat history. The check can be cancelled; its result applies to that model and device, rather than predicting speed for other models.
 

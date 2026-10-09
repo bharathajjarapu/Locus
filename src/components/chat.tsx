@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Artifact } from "@/components/artifact";
 import { Composer } from "@/components/composer";
 import { Header } from "@/components/header";
@@ -43,10 +43,10 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
   const mobile = useMobile();
 
   // Opens a passage while remembering where keyboard focus should return.
-  function open(source: Citation) {
+  const open = useCallback((source: Citation) => {
     opener.current = document.activeElement as HTMLElement;
     setSource({ ...source });
-  }
+  }, []);
 
   // Closes the viewer and restores focus to the citation.
   function close() { setSource(null); requestAnimationFrame(() => opener.current?.focus()); }

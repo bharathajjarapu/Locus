@@ -34,17 +34,19 @@ async function asset(name, size) {
   return bytes;
 }
 
-// Loads Moonshine or transcribes a bounded phrase on one CPU thread.
+// Downloads both pinned weight files.
+const weights = () => Promise.all([asset("moonshine-tiny-q8_0.gguf", 33881056), asset("tokenizer.bin", 251254)]);
+
+// Downloads, loads Moonshine or transcribes a bounded phrase on one CPU thread.
 onmessage = async ({ data }) => {
   try {
     if (data.type === "load") {
-      const [wasm, model, tokenizer] = await Promise.all([
+      const [wasm, [model, tokenizer]] = await Promise.all([
         fetch("./libwhisper.wasm").then((response) => {
           if (!response.ok) throw new Error("Couldn't load the voice runtime.");
           return response.arrayBuffer();
         }),
-        asset("moonshine-tiny-q8_0.gguf", 33881056),
-        asset("tokenizer.bin", 251254),
+        weights(),
       ]);
       const compiled = await WebAssembly.compile(wasm);
       const options = {
@@ -64,6 +66,9 @@ onmessage = async ({ data }) => {
       engine.FS_unlink("/model.bin");
       engine.FS_unlink("/tokenizer.bin");
       postMessage({ type: "ready" });
+    } else if (data.type === "fetch") {
+      await weights();
+      postMessage({ type: "fetched" });
     } else if (data.type === "audio") {
       const { samples, rate } = data;
       if (!(samples instanceof Float32Array) || !Number.isFinite(rate) || rate < 8000 || samples.length > rate * 15) throw new Error("Invalid voice audio.");

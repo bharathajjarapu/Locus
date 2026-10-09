@@ -75,7 +75,6 @@ export function importAll(backup: Backup): Chat[] {
   for (const chat of backup.chatTabs) {
     saveMessages(chat.id, backup.chats?.[chat.id]?.messages ?? []);
   }
-  saveChats(backup.chatTabs);
   return backup.chatTabs;
 }
 

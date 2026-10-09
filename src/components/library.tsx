@@ -3,15 +3,13 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Delete02Icon } from "@hugeicons/core-free-icons";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { FieldGroup } from "@/components/ui/field";
+import { FieldGroup, FieldLabel } from "@/components/ui/field";
 import { read } from "@/lib/docs";
-import { embedding, useEmbedder } from "@/lib/embed";
 import { forget, useMemory } from "@/lib/memory";
 import { add, remove, useLibrary } from "@/lib/rag";
 
-// Embedding model status, and the documents and memories the model can search
-export function Embeddings() {
-  const { status, progress } = useEmbedder();
+// Indexed files and saved memories the model can search
+export function Library() {
   const { entries, indexing } = useLibrary();
   const { memories } = useMemory();
   const [problem, setProblem] = useState("");
@@ -34,14 +32,14 @@ export function Embeddings() {
 
   return (
     <FieldGroup>
-      <div className="flex items-center gap-3 rounded-lg border p-3">
-        <div className="min-w-0 flex-1">
-          <div className="font-medium">{embedding.name}</div>
-          <div className="text-sm text-muted-foreground">Finds passages by meaning · {embedding.size}</div>
-        </div>
-        <span className="text-sm text-muted-foreground">{status === "loading" ? `${Math.round(progress * 100)}%` : status === "idle" ? "Loads on first use" : status}</span>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <FieldLabel>Indexed files</FieldLabel>
+        <Button variant="outline" size="sm" disabled={!!indexing} onClick={() => input.current?.click()}>
+          {indexing ? `Indexing ${indexing}…` : "Add files"}
+        </Button>
       </div>
       <div className="grid gap-2">
+        {!entries.length && <p className="rounded-lg border border-dashed p-3 text-center text-sm text-muted-foreground">No files yet</p>}
         {entries.map((entry) => (
           <div key={entry.id} className="flex items-center gap-3 rounded-lg border p-3">
             <div className="min-w-0 flex-1">
@@ -55,6 +53,9 @@ export function Embeddings() {
             </Button>
           </div>
         ))}
+      </div>
+      {memories.length > 0 && <FieldLabel>Memories</FieldLabel>}
+      <div className="grid gap-2">
         {memories.toSorted((a, b) => b.at - a.at).map((memory) => (
           <div key={memory.id} className="flex items-center gap-3 rounded-lg border p-3">
             <div className="min-w-0 flex-1 text-sm">{memory.text}</div>
@@ -64,9 +65,6 @@ export function Embeddings() {
           </div>
         ))}
       </div>
-      <Button variant="outline" size="sm" className="self-start" disabled={!!indexing} onClick={() => input.current?.click()}>
-        {indexing ? `Indexing ${indexing}…` : "Add files"}
-      </Button>
       <input ref={input} type="file" multiple hidden onChange={upload} />
       {problem && (
         <Alert variant="destructive">
