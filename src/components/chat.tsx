@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { run } from "@/lib/agent";
 import { useAttachments } from "@/lib/attach";
-import { nameChat, useModel, type Turn as Prompt } from "@/lib/llm";
+import { compact, nameChat, pick, thinks, useModel, type Turn as Prompt } from "@/lib/llm";
 import { options } from "@/lib/models";
 import { recall } from "@/lib/memory";
 import { system, withFiles } from "@/lib/prompt";
@@ -35,9 +35,10 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
   const [busy, setBusy] = useState(false);
   const [incognito, setIncognito] = useState(false);
   const abort = useRef<AbortController | null>(null);
+  const next = useRef("");
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
-  const { think } = useModel();
+  const { think, model } = useModel();
   const attachments = useAttachments();
   const [source, setSource] = useState<Citation | null>(null);
   const opener = useRef<HTMLElement | null>(null);
@@ -58,14 +59,33 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
 
   useEffect(() => () => abort.current?.abort(), []);
 
+  // Sends the queued message once the reply is saved
+  useEffect(() => {
+    const text = next.current;
+    if (!busy && text) {
+      next.current = "";
+      void send(text);
+    }
+  }, [busy]);
+
+  // Holds a message until the current reply ends
+  function queue(text: string) {
+    next.current = `${next.current} ${text}`.trim();
+    setInput("");
+  }
+
   useLayoutEffect(() => {
     const element = scroller.current;
     if (element && stick.current) element.scrollTop = element.scrollHeight;
   }, [messages]);
 
-  // Sends a message, replacing history from `cut` onward, and streams the reply
+  // Sends a message, replacing history from `cut` onward, and streams the reply; while busy, stops the reply and sends it next
   async function send(text: string, cut = messages.length) {
-    if (!text.trim() || busy) return;
+    if (!text.trim()) return;
+    if (busy) {
+      queue(text);
+      return abort.current?.abort();
+    }
     // Edits keep the files the original message had
     const isNew = cut === messages.length;
     const files = isNew ? attachments.ready() : messages[cut]?.files;
@@ -90,10 +110,11 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
     const controller = new AbortController();
     abort.current = controller;
     try {
-      const turns: Prompt[] = trim(
-        history.map((message) => ({ ...message, content: withFiles(message) })),
-        options().n_ctx * 2,
-      ).map(({ role, content }) => ({ role, content }));
+      const full = history.map((message) => ({ ...message, content: withFiles(message) }));
+      const budget = options().n_ctx * 2;
+      // Incognito chats are not saved, so they only trim
+      const { summary, live } = incognito ? { summary: "", live: trim(full, budget) } : await compact(chat.id, full, budget, controller.signal);
+      const turns: Prompt[] = live.map(({ role, content }) => ({ role, content }));
       // Pictures go with the newest message only, since they are not saved
       if (images.length)
         turns[turns.length - 1] = {
@@ -109,9 +130,9 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
       };
       const facts = await recall(text).catch(() => []);
       await run({
-        turns: [{ role: "system", content: system(name, facts.map((fact) => fact.text)) }, ...turns],
+        turns: [{ role: "system", content: system(name, facts.map((fact) => fact.text)) + (summary ? `\nSummary of the earlier conversation:\n${summary}` : "") }, ...turns],
         signal: controller.signal,
-        think,
+        think: thinks(),
         incognito,
         onText: (content, stats, thought) => update({ content, thought, ...stats }),
         onTools: (tools) => update({ tools, sources: [...new Map([...sources, ...tools.flatMap((tool) => tool.sources ?? [])].map((source) => [source.id, source])).values()] }),
@@ -137,6 +158,12 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
     }
   }
 
+  // Regenerates an answer, first switching to another model when one is given
+  async function retry(index: number, id?: string) {
+    if (id && id !== model.id) await pick(id);
+    void send(messages[index - 1].content, index - 1);
+  }
+
   // Downloads this chat as Markdown or a standalone HTML page
   async function share(format: string) {
     const text = markdown(chat.name, messages);
@@ -157,7 +184,11 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
       onAttach={(files) => void attachments.attach(files)}
       onDetach={attachments.detach}
       onSend={() => void send(input)}
-      onStop={() => abort.current?.abort()}
+      onQueue={() => queue(input)}
+      onStop={() => {
+        next.current = "";
+        abort.current?.abort();
+      }}
     />
   );
 
@@ -205,7 +236,7 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
                   onSource={open}
                   onEdit={(text) => void send(text, index)}
                   onFork={() => onFork(messages.slice(0, index + 1))}
-                  onRetry={() => void send(messages[index - 1].content, index - 1)}
+                  onRetry={(id) => void retry(index, id)}
                 />
               ))}
             </div>

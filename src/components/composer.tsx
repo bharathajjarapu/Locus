@@ -10,6 +10,7 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } fro
 import type { Attachment } from "@/lib/attach";
 import { preload, pick, toggleThink, useModel } from "@/lib/llm";
 import { models } from "@/lib/models";
+import { skills } from "@/lib/prompt";
 import { useSpeech } from "@/lib/speech";
 import { cn } from "@/lib/utils";
 
@@ -22,16 +23,17 @@ type Props = {
   onAttach: (files: File[]) => void;
   onDetach: (id: string) => void;
   onSend: () => void;
+  onQueue: () => void;
   onStop: () => void;
 };
 
-const choices = models.map((item) => ({ value: item.id, label: item.name }));
+export const choices = models.map((item) => ({ value: item.id, label: item.name }));
 
 // Input box style shared with message editing
 export const frame =
   "border-2 bg-card/90 dark:bg-card/90 dark:border-secondary has-[[data-slot=input-group-control]:focus-visible]:ring-0 dark:has-[[data-slot=input-group-control]:focus-visible]:border-ring";
 
-export function Composer({ input, setInput, busy, tall, files, onAttach, onDetach, onSend, onStop }: Props) {
+export function Composer({ input, setInput, busy, tall, files, onAttach, onDetach, onSend, onQueue, onStop }: Props) {
   const { model, think, status, progress, error } = useModel();
   const speech = useSpeech((text) => setInput((value) => `${value} ${text}`.trim()));
   const failed = status === "error" && !speech.error;
@@ -39,6 +41,7 @@ export function Composer({ input, setInput, busy, tall, files, onAttach, onDetac
   const [dragging, setDragging] = useState(false);
   const picker = useRef<HTMLInputElement>(null);
   // Sending waits until every attached file is read
+  const matches = /^\/\S*$/.test(input) ? skills().filter((skill) => skill.name && skill.name.startsWith(input.slice(1))) : [];
   const reading = files.some((file) => file.status === "reading" || file.status === "indexing");
 
   // The pieces are shared by the tall home layout and the compact chat layout
@@ -75,13 +78,13 @@ export function Composer({ input, setInput, busy, tall, files, onAttach, onDetac
           model.name
         )}
       </Pick>
-      {busy ? (
+      {input.trim() && !speech.listening ? (
+        <InputGroupButton variant="default" size="icon-sm" aria-label={busy ? "Steer" : "Send"} disabled={reading} onClick={onSend}>
+          <HugeiconsIcon icon={ArrowUp02Icon} />
+        </InputGroupButton>
+      ) : busy ? (
         <InputGroupButton variant="default" size="icon-sm" aria-label="Stop" onClick={onStop}>
           <HugeiconsIcon icon={StopIcon} />
-        </InputGroupButton>
-      ) : input.trim() && !speech.listening ? (
-        <InputGroupButton variant="default" size="icon-sm" aria-label="Send" disabled={reading} onClick={onSend}>
-          <HugeiconsIcon icon={ArrowUp02Icon} />
         </InputGroupButton>
       ) : (
         <InputGroupButton
@@ -101,15 +104,19 @@ export function Composer({ input, setInput, busy, tall, files, onAttach, onDetac
     <InputGroupTextarea
       autoFocus
       value={input}
-      placeholder="Message…"
+      placeholder={busy ? "Enter to steer, Tab to queue…" : "Message…"}
       rows={1}
       className={tall ? "max-h-48 min-h-9" : "max-h-48 min-h-0"}
       onChange={(event) => setInput(() => event.target.value)}
       onKeyDown={(event) => {
+        if (event.key === "Tab" && busy && input.trim()) {
+          event.preventDefault();
+          onQueue();
+        }
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
           if (speech.listening) void speech.listen();
-          else if (!busy && !reading) onSend();
+          else if (!reading) onSend();
         }
       }}
     />
@@ -118,6 +125,15 @@ export function Composer({ input, setInput, busy, tall, files, onAttach, onDetac
   return (
     <div className="w-full space-y-2">
       {speech.listening && <p role="status" className="text-sm text-muted-foreground">{speech.status || "Listening…"}</p>}
+      {matches.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {matches.map((skill) => (
+            <Button key={skill.name} variant="outline" size="xs" title={skill.text} onClick={() => setInput(() => `/${skill.name} `)}>
+              /{skill.name}
+            </Button>
+          ))}
+        </div>
+      )}
       {problem && (
         <Alert variant={failed ? "destructive" : "default"}>
           <AlertDescription>{problem}</AlertDescription>

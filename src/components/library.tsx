@@ -1,11 +1,12 @@
 import { useRef, useState, type ChangeEvent } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Delete02Icon } from "@hugeicons/core-free-icons";
+import { Delete02Icon, PencilEdit01Icon } from "@hugeicons/core-free-icons";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { read } from "@/lib/docs";
-import { forget, useMemory } from "@/lib/memory";
+import { edit, forget, useMemory } from "@/lib/memory";
 import { add, remove, useLibrary } from "@/lib/rag";
 
 // Indexed files and saved memories the model can search
@@ -13,6 +14,7 @@ export function Library() {
   const { entries, indexing } = useLibrary();
   const { memories } = useMemory();
   const [problem, setProblem] = useState("");
+  const [editing, setEditing] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
 
   // Indexes each chosen file in turn
@@ -28,6 +30,12 @@ export function Library() {
     } catch (error) {
       setProblem(String(error));
     }
+  }
+
+  // Saves an edited memory unless it was emptied or unchanged
+  function save(id: string, text: string) {
+    setEditing(null);
+    if (text.trim() && text.trim() !== memories.find((memory) => memory.id === id)?.text) edit(id, text.trim()).catch((error) => setProblem(String(error)));
   }
 
   return (
@@ -58,7 +66,25 @@ export function Library() {
       <div className="grid gap-2">
         {memories.toSorted((a, b) => b.at - a.at).map((memory) => (
           <div key={memory.id} className="flex items-center gap-3 rounded-lg border p-3">
-            <div className="min-w-0 flex-1 text-sm">{memory.text}</div>
+            {editing === memory.id ? (
+              <Input
+                autoFocus
+                defaultValue={memory.text}
+                aria-label="Memory"
+                onBlur={(event) => save(memory.id, event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") save(memory.id, event.currentTarget.value);
+                  if (event.key === "Escape") setEditing(null);
+                }}
+              />
+            ) : (
+              <>
+                <div className="min-w-0 flex-1 text-sm">{memory.text}</div>
+                <Button variant="ghost" size="icon-sm" aria-label="Edit memory" onClick={() => setEditing(memory.id)}>
+                  <HugeiconsIcon icon={PencilEdit01Icon} />
+                </Button>
+              </>
+            )}
             <Button variant="ghost" size="icon-sm" aria-label="Delete memory" onClick={() => void forget(memory.id)}>
               <HugeiconsIcon icon={Delete02Icon} />
             </Button>

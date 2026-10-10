@@ -15,6 +15,25 @@ export const lengths = [
   { value: "detailed", label: "Detailed", text: "Give the direct answer first, then explain thoroughly with details, examples and caveats." },
 ];
 
+export const skillsKey = "skills";
+export type Skill = { name: string; text: string };
+const starters: Skill[] = [
+  { name: "summarize", text: "Summarize the following in three short bullet points." },
+  { name: "explain", text: "Explain the following simply, with one example." },
+  { name: "translate", text: "Translate the following to English." },
+  { name: "fix", text: "Fix the grammar and spelling of the following, keeping its meaning." },
+];
+
+// Prompt templates saved in Persona, starting with a few examples
+export const skills = (): Skill[] => JSON.parse(localStorage.getItem(skillsKey) ?? "null") ?? starters;
+
+// Turns "/name rest" into the saved template followed by the rest
+function expand(content: string) {
+  const [, name, rest] = content.match(/^\/(\S+)\s*([\s\S]*)/) ?? [];
+  const skill = name && skills().find((item) => item.name === name);
+  return skill ? `${skill.text}${rest ? `\n\n${rest}` : ""}` : content;
+}
+
 // Builds the system prompt, adding the persona the user saved in settings and remembered facts
 export function system(name: string, facts: string[] = []) {
   const persona = localStorage.getItem(personaKey)?.trim();
@@ -28,5 +47,5 @@ export function system(name: string, facts: string[] = []) {
 export const passage = (source: Source) => `[${source.name}${source.page ? `, page ${source.page}` : ""}](locus:${source.id})\n${source.text}`;
 
 // A message as the model sees it: attached text comes first, then what the user wrote
-export const withFiles = ({ content, files }: Message) =>
-  [...(files ?? []).map((file) => (file.image ? `Attached image "${file.name}".` : file.sources?.length ? file.sources.map(passage).join("\n\n") : file.text ? `Attached file "${file.name}":\n${file.text}` : `Attached file "${file.name}" is saved in the library; search it with search_library.`)), content].join("\n\n");
+export const withFiles = ({ role, content, files }: Message) =>
+  [...(files ?? []).map((file) => (file.image ? `Attached image "${file.name}".` : file.sources?.length ? file.sources.map(passage).join("\n\n") : file.text ? `Attached file "${file.name}":\n${file.text}` : `Attached file "${file.name}" is saved in the library; search it with search_library.`)), role === "user" ? expand(content) : content].join("\n\n");

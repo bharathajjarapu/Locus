@@ -1,11 +1,12 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowUp02Icon, Cancel01Icon, Copy01Icon, GitForkIcon, PencilEdit01Icon, RefreshIcon, StopIcon, Tick02Icon, VolumeHighIcon } from "@hugeicons/core-free-icons";
+import { AiBrain01Icon, ArrowUp02Icon, Cancel01Icon, Copy01Icon, GitForkIcon, PencilEdit01Icon, RefreshIcon, StopIcon, Tick02Icon, VolumeHighIcon } from "@hugeicons/core-free-icons";
 import { Chip } from "@/components/chip";
-import { frame } from "@/components/composer";
+import { choices, frame } from "@/components/composer";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from "@/components/ui/group";
+import { Pick } from "@/components/pick";
 import { Message, MessageContent, MessageFooter } from "@/components/ui/message";
 import { Spinner } from "@/components/ui/spinner";
 import { speak, stop, useVoice } from "@/lib/speech";
@@ -27,7 +28,7 @@ type Props = {
   think: boolean;
   onEdit: (text: string) => void;
   onFork: () => void;
-  onRetry: () => void;
+  onRetry: (model?: string) => void;
   onSource: (source: Source) => void;
 };
 
@@ -173,9 +174,14 @@ export function Turn({ message, last, busy, nerd, think, onEdit, onFork, onRetry
             <Button variant="ghost" size="icon-sm" aria-label="Fork" onClick={onFork}>
               <HugeiconsIcon icon={GitForkIcon} />
             </Button>
-            <Button variant="ghost" size="icon-sm" aria-label="Retry" disabled={busy} onClick={onRetry}>
+            <Button variant="ghost" size="icon-sm" aria-label="Retry" disabled={busy} onClick={() => onRetry()}>
               <HugeiconsIcon icon={RefreshIcon} />
             </Button>
+            {last && (
+              <Pick compact label="Retry with another model" items={choices} value="" disabled={busy} onChange={onRetry}>
+                <HugeiconsIcon icon={AiBrain01Icon} />
+              </Pick>
+            )}
             {nerd && message.speed != null && (
               <span className="ml-1 text-sm font-normal tabular-nums">
                 {message.speed.toFixed(1)} tok/s · {message.tokens} tokens

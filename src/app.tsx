@@ -48,6 +48,10 @@ export default function App() {
   const rename = (id: string, value: string) =>
     setChats((items) => items.map((item) => (item.id === id ? { ...item, name: value } : item)));
 
+  // Pins or unpins a chat
+  const pin = (id: string) =>
+    setChats((items) => items.map((item) => (item.id === id ? { ...item, pinned: !item.pinned } : item)));
+
   useEffect(() => {
     // Ctrl+K opens search, Ctrl+Shift+O starts a chat
     const onKey = (event: KeyboardEvent) => {
@@ -83,6 +87,7 @@ export default function App() {
         onSearch={() => setSearch(true)}
         onSettings={() => setSettings(true)}
         onRename={rename}
+        onPin={pin}
         onDelete={remove}
       />
       <SidebarInset className="h-dvh">

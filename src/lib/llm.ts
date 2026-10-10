@@ -1,6 +1,7 @@
 import type { ChatCompletionMessage, ChatCompletionTool, ChatCompletionToolCall } from "@wllama/wllama/esm/index.js";
 import { atom } from "@/lib/atom";
 import { engine } from "@/lib/engine";
+import { trim, type Message } from "@/lib/store";
 import { find, models, options, own, setOptions, setOwn, type Model } from "@/lib/models";
 
 export type Turn = ChatCompletionMessage;
@@ -160,6 +161,9 @@ export function toggleThink() {
   update({ think: !get().think });
 }
 
+// Whether thinking is on for the selected model
+export const thinks = () => get().think;
+
 // Whether the selected model can call tools
 export const canCallTools = () => active().tools;
 
@@ -272,4 +276,36 @@ export async function nameChat(text: string, signal: AbortSignal) {
   );
   const words = out.split("\n")[0].match(/[\p{L}\p{N}']+/gu) ?? [];
   return words.slice(0, 2).join(" ");
+}
+
+// Folds old messages into a summary saved with the chat once the live window passes the budget, so each message is summarized once; returns the summary and the messages still sent in full
+export async function compact(chat: string, history: Message[], budget: number, signal: AbortSignal) {
+  const key = `chat_meta_${chat}`;
+  const saved: { id: string; text: string } | null = JSON.parse(localStorage.getItem(key) ?? "null");
+  const from = saved ? history.findIndex((message) => message.id === saved.id) + 1 : 0;
+  const old = from ? saved!.text : "";
+  const live = history.slice(from);
+  const fit = trim(live, budget);
+  if (fit.length === live.length) return { summary: old, live };
+  // Shrink to half the budget, so the next summary comes after as much new chat
+  const kept = trim(live, budget / 2);
+  const dropped = live.slice(0, live.length - kept.length);
+  if (!dropped.length) return { summary: old, live };
+  const lines = dropped.map((message) => `${message.role === "user" ? "User" : "Assistant"}: ${message.content.slice(0, 600)}`).join("\n").slice(-6000);
+  let text = "";
+  const system = "Summarize this conversation in under 150 words. Keep names, facts, decisions and open questions. Reply with the summary only.";
+  await exclusive(() =>
+    reply({
+      turns: [
+        { role: "system", content: system },
+        { role: "user", content: `${old ? `Earlier summary:\n${old}\n\n` : ""}New messages:\n${lines}` },
+      ],
+      signal,
+      onText: (full) => (text = full),
+      limit: 250,
+    }),
+  );
+  if (!text.trim()) return { summary: old, live };
+  localStorage.setItem(key, JSON.stringify({ id: dropped[dropped.length - 1].id, text: text.trim() }));
+  return { summary: text.trim(), live: kept };
 }

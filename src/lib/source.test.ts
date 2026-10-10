@@ -22,6 +22,8 @@ check(valid.includes('data-source="document/1"') && !valid.includes('data-source
 check(!render("[notes](locus:document/1)").includes("data-source"), "Citation leaked between renders");
 check(!render('<script>alert(1)</script> [bad](javascript:alert)').includes("<script>"), "Unsafe source markup rendered");
 check(withFiles({ id: "user", role: "user", content: "Explain", files: [{ name: source.name, text, sources: [source] }] }).includes(`(locus:${source.id})\n${source.text}`), "Inline PDF lost its source link");
+Object.assign(globalThis, { localStorage: { getItem: () => null } });
+check(withFiles({ id: "user", role: "user", content: "/fix teh" }).startsWith("Fix the grammar") && withFiles({ id: "user", role: "user", content: "/nope" }) === "/nope", "Template did not expand");
 check(JSON.parse(JSON.stringify(source)).start === source.start, "Citation position lost on reload");
 
 // Builds a small original PDF with repeated lines on two pages.

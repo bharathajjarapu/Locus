@@ -19,7 +19,7 @@ export type Tool = {
 // JSON schema for a tool that takes one text argument
 const text = (key: string, description: string) => ({ type: "object" as const, properties: { [key]: { type: "string", description } }, required: [key] });
 
-type Ask = { question: string; options: string[]; answer: (text: string) => void };
+type Ask = { items: { question: string; options: string[] }[]; answer: (values: string[]) => void };
 const asking = atom({ ask: null as Ask | null });
 export const useAsk = asking.use;
 
@@ -80,25 +80,23 @@ export const tools: Tool[] = [
   {
     name: "ask_user",
     label: "Ask you",
-    description: "Ask the user a question when you need their choice or missing details before you can answer well. Offer short options when there are clear choices.",
+    description: "Ask the user when you need their choice or missing details before you can answer well. Send 1 to 4 questions, one per item. Write \"Question | option | option\" to offer up to 4 choices (the user can still type their own answer), or just the question for a typed answer. Example: [\"Which language? | Python | Rust | Go\", \"What should it be called?\"]. Do not ask what you can work out yourself.",
     parameters: {
       type: "object",
-      properties: {
-        question: { type: "string", description: "The question to ask" },
-        options: { type: "array", items: { type: "string" }, description: "Up to 4 short answers to pick from; leave out for a free answer" },
-      },
-      required: ["question"],
+      properties: { questions: { type: "array", items: { type: "string" }, description: "Each item is \"Question | option | option\" or just \"Question\"" } },
+      required: ["questions"],
     },
-    // Waits for the user's answer in a dialog; stopping the chat skips it
-    run: ({ question, options = "" }, signal) => new Promise((resolve) => {
-      const answer = (text: string) => {
+    // Waits for the user's answers in a dialog; stopping the chat skips it
+    run: ({ questions = "" }, signal) => new Promise((resolve) => {
+      const items = questions.split("\n").map((line) => line.split("|").map((part) => part.trim()).filter(Boolean)).filter((parts) => parts.length).slice(0, 4).map(([question, ...options]) => ({ question, options: options.slice(0, 4) }));
+      const answer = (values: string[]) => {
         signal.removeEventListener("abort", skip);
         asking.set({ ask: null });
-        resolve(text ? `The user answered: ${text}` : "The user skipped the question.");
+        resolve(values.some(Boolean) ? `The user answered:\n${items.map((item, index) => `${item.question} ${values[index] || "(no answer)"}`).join("\n")}\nContinue using these answers.` : "The user skipped the question.");
       };
-      const skip = () => answer("");
+      const skip = () => answer([]);
       signal.addEventListener("abort", skip, { once: true });
-      asking.set({ ask: { question, options: options.split("\n").map((item) => item.trim()).filter(Boolean).slice(0, 4), answer } });
+      asking.set({ ask: { items, answer } });
     }),
   },
   {

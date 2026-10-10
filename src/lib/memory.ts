@@ -32,6 +32,17 @@ export async function remember(text: string) {
   return old ? `Updated: ${old.text} → ${text}` : "Saved.";
 }
 
+// Rewrites a memory's text and re-embeds it
+export async function edit(id: string, text: string) {
+  const [vector] = await embed([text]);
+  const list = await load();
+  const old = list.find((memory) => memory.id === id);
+  if (!old) return;
+  const memory = { ...old, text, vector };
+  await put(memory, "memory");
+  publish(list.map((item) => (item === old ? memory : item)));
+}
+
 // Deletes a memory
 export async function forget(id: string) {
   await del(id, "memory");

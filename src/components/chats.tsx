@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Add01Icon, Delete02Icon, PencilEdit01Icon, Search01Icon, Settings02Icon } from "@hugeicons/core-free-icons";
+import { Add01Icon, Delete02Icon, PencilEdit01Icon, Pin02Icon, Search01Icon, Settings02Icon } from "@hugeicons/core-free-icons";
 import {
   Sidebar,
   SidebarContent,
@@ -25,10 +25,11 @@ type Props = {
   onSearch: () => void;
   onSettings: () => void;
   onRename: (id: string, name: string) => void;
+  onPin: (id: string) => void;
   onDelete: (id: string) => void;
 };
 
-export function Chats({ chats, active, onSelect, onNew, onSearch, onSettings, onRename, onDelete }: Props) {
+export function Chats({ chats, active, onSelect, onNew, onSearch, onSettings, onRename, onPin, onDelete }: Props) {
   const [editing, setEditing] = useState<string | null>(null);
   const { dismiss } = useSidebar();
 
@@ -53,6 +54,47 @@ export function Chats({ chats, active, onSelect, onNew, onSearch, onSettings, on
     </SidebarMenuItem>
   );
 
+  // Sidebar row for one chat
+  const row = (chat: Chat) => (
+    <SidebarMenuItem key={chat.id}>
+      {editing === chat.id ? (
+        <SidebarInput
+          autoFocus
+          defaultValue={chat.name}
+          aria-label="Chat name"
+          onBlur={(event) => rename(chat.id, event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") rename(chat.id, event.currentTarget.value);
+            if (event.key === "Escape") setEditing(null);
+          }}
+        />
+      ) : (
+        <>
+          <SidebarMenuButton isActive={chat.id === active} className="pr-[4.5rem]" onClick={close(() => onSelect(chat.id))}>
+            <span>{chat.name}</span>
+          </SidebarMenuButton>
+          <SidebarMenuAction aria-label={chat.pinned ? "Unpin" : "Pin"} aria-pressed={!!chat.pinned} className="right-14" onClick={() => onPin(chat.id)}>
+            <HugeiconsIcon icon={Pin02Icon} />
+          </SidebarMenuAction>
+          <SidebarMenuAction aria-label="Rename" className="right-7" onClick={() => setEditing(chat.id)}>
+            <HugeiconsIcon icon={PencilEdit01Icon} />
+          </SidebarMenuAction>
+          <SidebarMenuAction aria-label="Delete" className="hover:text-destructive" onClick={() => onDelete(chat.id)}>
+            <HugeiconsIcon icon={Delete02Icon} />
+          </SidebarMenuAction>
+        </>
+      )}
+    </SidebarMenuItem>
+  );
+
+  // Sidebar group of chats under a label
+  const group = (label: string, list: Chat[]) => list.length > 0 && (
+    <SidebarGroup>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      <SidebarMenu>{list.map(row)}</SidebarMenu>
+    </SidebarGroup>
+  );
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -67,39 +109,8 @@ export function Chats({ chats, active, onSelect, onNew, onSearch, onSettings, on
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Chats</SidebarGroupLabel>
-          <SidebarMenu>
-            {chats.map((chat) => (
-              <SidebarMenuItem key={chat.id}>
-                {editing === chat.id ? (
-                  <SidebarInput
-                    autoFocus
-                    defaultValue={chat.name}
-                    aria-label="Chat name"
-                    onBlur={(event) => rename(chat.id, event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") rename(chat.id, event.currentTarget.value);
-                      if (event.key === "Escape") setEditing(null);
-                    }}
-                  />
-                ) : (
-                  <>
-                    <SidebarMenuButton isActive={chat.id === active} className="pr-12" onClick={close(() => onSelect(chat.id))}>
-                      <span>{chat.name}</span>
-                    </SidebarMenuButton>
-                    <SidebarMenuAction aria-label="Rename" className="right-7" onClick={() => setEditing(chat.id)}>
-                      <HugeiconsIcon icon={PencilEdit01Icon} />
-                    </SidebarMenuAction>
-                    <SidebarMenuAction aria-label="Delete" className="hover:text-destructive" onClick={() => onDelete(chat.id)}>
-                      <HugeiconsIcon icon={Delete02Icon} />
-                    </SidebarMenuAction>
-                  </>
-                )}
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
+        {group("Pinned", chats.filter((chat) => chat.pinned))}
+        {group("Chats", chats.filter((chat) => !chat.pinned))}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>{link(Settings02Icon, "Settings", onSettings)}</SidebarMenu>

@@ -4,33 +4,37 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { useAsk } from "@/lib/tools";
 
-// Shows the model's question with its options and a free answer box; closing skips it
+// Shows the model's questions, each with option buttons and an "Other" box; closing skips them
 export function Question() {
   const { ask } = useAsk();
-  const [text, setText] = useState("");
+  const [picks, setPicks] = useState<string[]>([]);
   if (!ask) return null;
-  const send = (value: string) => {
-    setText("");
-    ask.answer(value.trim());
+  const { items } = ask;
+  const done = items.every((_, index) => picks[index]?.trim());
+  const send = (values: string[]) => {
+    setPicks([]);
+    ask.answer(values.map((value) => value.trim()));
   };
+  const set = (index: number, value: string) => setPicks((list) => Object.assign([...list], { [index]: value }));
   return (
-    <Dialog open onOpenChange={(open) => !open && send("")}>
-      <DialogContent>
+    <Dialog open onOpenChange={(open) => !open && send([])}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="pr-6">{ask.question}</DialogTitle>
+          <DialogTitle className="pr-6">{items.length > 1 ? "A few questions" : "A question"}</DialogTitle>
         </DialogHeader>
-        {ask.options.length > 0 && (
-          <div className="grid gap-2">
-            {ask.options.map((option) => (
-              <Button key={option} variant="outline" className="h-auto justify-start py-2 text-left whitespace-normal" onClick={() => send(option)}>
-                {option}
-              </Button>
-            ))}
-          </div>
-        )}
-        <form className="flex gap-2" onSubmit={(event) => { event.preventDefault(); if (text.trim()) send(text); }}>
-          <Input autoFocus value={text} placeholder={ask.options.length ? "Other…" : "Your answer"} onChange={(event) => setText(event.target.value)} />
-          <Button type="submit" disabled={!text.trim()}>Send</Button>
+        <form className="grid gap-4" onSubmit={(event) => { event.preventDefault(); if (done) send(picks); }}>
+          {items.map(({ question, options }, index) => (
+            <fieldset key={index} className="grid gap-2">
+              <legend className="mb-2 font-medium">{question}</legend>
+              {options.map((option) => (
+                <Button key={option} type="button" variant={picks[index] === option ? "secondary" : "outline"} aria-pressed={picks[index] === option} className="h-auto justify-start py-2 text-left whitespace-normal" onClick={() => (items.length === 1 ? send([option]) : set(index, option))}>
+                  {option}
+                </Button>
+              ))}
+              <Input autoFocus={index === 0} aria-label={question} value={options.includes(picks[index]) ? "" : (picks[index] ?? "")} placeholder={options.length ? "Other…" : "Your answer"} onChange={(event) => set(index, event.target.value)} />
+            </fieldset>
+          ))}
+          <Button type="submit" disabled={!done}>Send</Button>
         </form>
       </DialogContent>
     </Dialog>

@@ -1,4 +1,4 @@
-export type Chat = { id: string; name: string };
+export type Chat = { id: string; name: string; pinned?: boolean };
 export type Source = { id: string; doc: string; name: string; chunk: number; text: string; page?: number; start?: number; end?: number; scanned?: boolean };
 // A tool the model called while answering, with what it returned
 export type Used = { name: string; args: string; result: string; denied?: boolean; sources?: Source[] };
