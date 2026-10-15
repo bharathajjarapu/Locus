@@ -20,21 +20,19 @@ export function Persona() {
   const [tone, setTone] = useSaved<string>("tone", "neutral");
   const [length, setLength] = useSaved<string>("length", "balanced");
   return (
-    <FieldGroup className="gap-4">
+    <FieldGroup>
       <Field>
         <FieldLabel htmlFor="about">About you</FieldLabel>
         <Input id="about" value={about} placeholder="Nursing student in Hyderabad, likes cricket" onChange={(event) => setAbout(event.target.value)} />
       </Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field orientation="horizontal">
-          <FieldLabel>Tone</FieldLabel>
-          <Pick label="Tone" items={tones} value={tone} onChange={setTone} />
-        </Field>
-        <Field orientation="horizontal">
-          <FieldLabel>Length</FieldLabel>
-          <Pick label="Length" items={lengths} value={length} onChange={setLength} />
-        </Field>
-      </div>
+      <Field orientation="horizontal">
+        <FieldLabel>Tone</FieldLabel>
+        <Pick label="Tone" items={tones} value={tone} onChange={setTone} />
+      </Field>
+      <Field orientation="horizontal">
+        <FieldLabel>Length</FieldLabel>
+        <Pick label="Length" items={lengths} value={length} onChange={setLength} />
+      </Field>
       <Field>
         <div className="flex items-center justify-between gap-2">
           <FieldLabel htmlFor="persona">Instructions</FieldLabel>

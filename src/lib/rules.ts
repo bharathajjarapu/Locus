@@ -1,6 +1,6 @@
 import { atom } from "@/lib/atom";
 
-export type Rule = "ask" | "allow" | "deny";
+type Rule = "ask" | "allow" | "deny";
 
 const key = "toolRules";
 const store = atom<Record<string, Rule>>(JSON.parse(localStorage.getItem(key) ?? "{}"));

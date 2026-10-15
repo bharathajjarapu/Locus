@@ -5,7 +5,7 @@ import { trim, type Message } from "@/lib/store";
 import { find, models, options, own, setOptions, setOwn, type Model } from "@/lib/models";
 
 export type Turn = ChatCompletionMessage;
-export type Stats = { speed: number; tokens: number };
+type Stats = { speed: number; tokens: number };
 type State = {
   model: Model;
   think: boolean;

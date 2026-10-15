@@ -7,7 +7,7 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="field-group"
       className={cn(
-        "group/field-group @container/field-group flex w-full flex-col gap-5 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4",
+        "group/field-group @container/field-group flex w-full flex-col divide-y *:py-3 *:first:pt-0 *:last:pb-0",
         className
       )}
       {...props}
@@ -17,8 +17,7 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
 
 const layouts = {
   vertical: "flex-col *:w-full [&>.sr-only]:w-auto",
-  horizontal: "flex-row items-center has-[>[data-slot=field-content]]:items-start *:data-[slot=field-label]:flex-auto has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
-  responsive: "flex-col *:w-full @md/field-group:flex-row @md/field-group:items-center @md/field-group:*:w-auto @md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:*:data-[slot=field-label]:flex-auto [&>.sr-only]:w-auto @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
+  horizontal: "flex-row items-center *:data-[slot=field-label]:flex-auto",
 }
 
 // Groups controls in the selected layout.
@@ -35,19 +34,6 @@ function Field({
       className={cn(
         "group/field flex w-full gap-2 data-[invalid=true]:text-destructive",
         layouts[orientation], className
-      )}
-      {...props}
-    />
-  )
-}
-
-function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="field-content"
-      className={cn(
-        "group/field-content flex flex-1 flex-col gap-0.5 leading-snug",
-        className
       )}
       {...props}
     />
@@ -86,4 +72,4 @@ function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
   )
 }
 
-export { Field, FieldLabel, FieldDescription, FieldGroup, FieldContent }
+export { Field, FieldLabel, FieldDescription, FieldGroup }

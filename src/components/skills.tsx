@@ -15,13 +15,15 @@ export function Skills() {
   const change = (index: number, patch: Partial<Skill>) => save(list.map((item, at) => (at === index ? { ...item, ...patch } : item)));
   return (
     <FieldGroup>
-      <div className="flex items-center justify-between gap-2">
-        <FieldLabel>Templates</FieldLabel>
-        <Button variant="outline" size="sm" onClick={() => save([...list, { name: "", text: "" }])}>Add</Button>
+      <div className="grid gap-1">
+        <div className="flex items-center justify-between gap-2">
+          <FieldLabel>Templates</FieldLabel>
+          <Button variant="outline" size="sm" onClick={() => save([...list, { name: "", text: "" }])}>Add</Button>
+        </div>
+        <FieldDescription>Start a message with /name to use one.</FieldDescription>
       </div>
-      <FieldDescription>Start a message with /name to use one.</FieldDescription>
       {list.map((skill, index) => (
-        <div key={index} className="grid gap-2 rounded-lg border p-3">
+        <div key={index} className="grid gap-2">
           <div className="flex gap-2">
             <Input value={skill.name} placeholder="name" aria-label="Template name" onChange={(event) => change(index, { name: event.target.value.replace(/\s/g, "") })} />
             <Button variant="ghost" size="icon-sm" aria-label="Delete template" onClick={() => save(list.filter((_, at) => at !== index))}>

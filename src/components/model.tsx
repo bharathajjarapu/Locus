@@ -50,7 +50,7 @@ export function Model() {
   };
 
   return (
-    <FieldGroup className="gap-4">
+    <FieldGroup>
       <Field orientation="horizontal">
         <FieldLabel>Chat model</FieldLabel>
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
@@ -86,7 +86,7 @@ export function Model() {
         Drop a chat model .gguf here, with its mmproj for vision, or click to choose
         <input type="file" accept=".gguf" multiple hidden onChange={(event) => { take(event.target.files); event.target.value = ""; }} />
       </label>
-      <div className="grid gap-x-6 gap-y-4 border-t pt-3 sm:grid-cols-2">
+      <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
         <p className="font-medium sm:col-span-2">Sampling</p>
         {sliders.map((item) => (
           <Field key={item.key}>

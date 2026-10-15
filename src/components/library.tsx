@@ -45,6 +45,7 @@ export function Library() {
         <Button variant="outline" size="sm" disabled={!!indexing} onClick={() => input.current?.click()}>
           {indexing ? `Indexing ${indexing}…` : "Add files"}
         </Button>
+        <input ref={input} type="file" multiple hidden onChange={upload} />
       </div>
       <div className="grid gap-2">
         {!entries.length && <p className="rounded-lg border border-dashed p-3 text-center text-sm text-muted-foreground">No files yet</p>}
@@ -91,7 +92,6 @@ export function Library() {
           </div>
         ))}
       </div>
-      <input ref={input} type="file" multiple hidden onChange={upload} />
       {problem && (
         <Alert variant="destructive">
           <AlertDescription>{problem}</AlertDescription>
