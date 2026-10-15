@@ -1,0 +1,207 @@
+{
+  "label": "second-final",
+  "url": "http://localhost:4173",
+  "date": "2026-10-15T13:53:25.615Z",
+  "summary": {
+    "cold": 475.9,
+    "startup": 179.5,
+    "settings": 86.2,
+    "source": 100,
+    "history": 82.6,
+    "input": 30.3,
+    "fullInput": 29.3,
+    "scroll95": 17.7,
+    "scrollMax": 29,
+    "nodes": 2406,
+    "panels": {
+      "Files": 101.1,
+      "General": 100.6,
+      "Models": 76.6,
+      "Persona": 88.7,
+      "Skills": 67.9,
+      "Tools": 72.8
+    }
+  },
+  "samples": [
+    {
+      "earlier": 48.72999998927117,
+      "fullInput": 29.269999980926514,
+      "history": 67.83500000834465,
+      "input": 30.349999994039536,
+      "nodes": 2406,
+      "panels": {
+        "Files": 96.15000000596046,
+        "General": 96.38999998569489,
+        "Models": 83.63000002503395,
+        "Persona": 88.8299999833107,
+        "Skills": 67.93999999761581,
+        "Tools": 65.71000000834465
+      },
+      "scroll95": 17.24500000476837,
+      "scrollMax": 29.020000010728836,
+      "settings": 81.75999999046326,
+      "source": 99.9699999988079,
+      "startup": 163.1899999976158,
+      "cold": 9758.604999989271,
+      "timing": {
+        "content": 339.30499997735023,
+        "painted": 9758.604999989271,
+        "ready": 139.6749999821186,
+        "styles": [
+          {
+            "duration": 39.7049999833107,
+            "name": "http://localhost:4173/assets/index-Bw6JJCgQ.css"
+          },
+          {
+            "duration": 4.320000022649765,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 48.75500002503395,
+      "fullInput": 29.355000019073486,
+      "history": 78.71000000834465,
+      "input": 33.15999999642372,
+      "nodes": 2403,
+      "panels": {
+        "Files": 108.66000002622604,
+        "General": 110.67500001192091,
+        "Models": 76.62999999523163,
+        "Persona": 106.8149999976158,
+        "Skills": 106.47999998927116,
+        "Tools": 77.02500000596046
+      },
+      "scroll95": 17.729999989271164,
+      "scrollMax": 25.474999994039536,
+      "settings": 86.15999999642372,
+      "source": 116.6850000023842,
+      "startup": 204.375,
+      "cold": 475.949999988079,
+      "timing": {
+        "content": 420.0900000035763,
+        "painted": 475.949999988079,
+        "ready": 180.78999999165535,
+        "styles": [
+          {
+            "duration": 70.22500002384186,
+            "name": "http://localhost:4173/assets/index-Bw6JJCgQ.css"
+          },
+          {
+            "duration": 15.140000015497208,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 48.25,
+      "fullInput": 29.375,
+      "history": 82.56000000238419,
+      "input": 33.28999999165535,
+      "nodes": 2406,
+      "panels": {
+        "Files": 98.7800000011921,
+        "General": 96.13500002026558,
+        "Models": 73.98499998450279,
+        "Persona": 80.71000000834465,
+        "Skills": 63.69999998807907,
+        "Tools": 90.71000000834464
+      },
+      "scroll95": 22.21500000357628,
+      "scrollMax": 36.58500000834465,
+      "settings": 100.16500002145769,
+      "source": 100.02500000596046,
+      "startup": 170.19999998807907,
+      "cold": 436.1899999976158,
+      "timing": {
+        "content": 380.9799999892712,
+        "painted": 436.1899999976158,
+        "ready": 161.7699999809265,
+        "styles": [
+          {
+            "duration": 59.400000005960464,
+            "name": "http://localhost:4173/assets/index-Bw6JJCgQ.css"
+          },
+          {
+            "duration": 12.944999992847444,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 48.814999997615814,
+      "fullInput": 27.86499997973442,
+      "history": 87.2199999988079,
+      "input": 29.37999999523163,
+      "nodes": 2406,
+      "panels": {
+        "Files": 101.08500000834464,
+        "General": 100.5600000023842,
+        "Models": 70.00999999046326,
+        "Persona": 80.85499998927116,
+        "Skills": 67.25499999523163,
+        "Tools": 72.47499999403954
+      },
+      "scroll95": 17.25,
+      "scrollMax": 18.19999998807907,
+      "settings": 79.70500001311302,
+      "source": 100,
+      "startup": 179.47500002384186,
+      "cold": 9880.784999996424,
+      "timing": {
+        "content": 380.0300000011921,
+        "painted": 9880.784999996424,
+        "ready": 180.69499999284744,
+        "styles": [
+          {
+            "duration": 71.40000000596046,
+            "name": "http://localhost:4173/assets/index-Bw6JJCgQ.css"
+          },
+          {
+            "duration": 21.080000013113025,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 48.76000002026558,
+      "fullInput": 22.19999998807907,
+      "history": 141.7000000178814,
+      "input": 27.575000017881393,
+      "nodes": 2403,
+      "panels": {
+        "Files": 109.22500002384186,
+        "General": 110.13999998569489,
+        "Models": 77.76500001549721,
+        "Persona": 88.65000000596046,
+        "Skills": 72.58499997854233,
+        "Tools": 72.81000000238419
+      },
+      "scroll95": 22.474999994039536,
+      "scrollMax": 30.96000000834465,
+      "settings": 112.2049999833107,
+      "source": 106.80500000715256,
+      "startup": 202.83500000834465,
+      "cold": 419.44499999284744,
+      "timing": {
+        "content": 354.544999986887,
+        "painted": 419.44499999284744,
+        "ready": 143.11499997973442,
+        "styles": [
+          {
+            "duration": 51.7049999833107,
+            "name": "http://localhost:4173/assets/index-Bw6JJCgQ.css"
+          },
+          {
+            "duration": 10.495000004768372,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          }
+        ]
+      }
+    }
+  ]
+}

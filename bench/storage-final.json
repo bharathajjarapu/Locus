@@ -1,0 +1,54 @@
+{
+  "label": "storage-final",
+  "date": "2026-10-15T13:54:22.124Z",
+  "summary": {
+    "content": 232.15999999642372,
+    "libraryBytes": 0,
+    "libraryRead": 0,
+    "stringify": 0,
+    "writes": 0,
+    "files": 21.62999999523163
+  },
+  "samples": [
+    {
+      "content": 230.7999999821186,
+      "libraryBytes": 0,
+      "libraryRead": 0,
+      "stringify": 0,
+      "writes": 0,
+      "files": 23.435000002384182
+    },
+    {
+      "content": 264.8250000178814,
+      "libraryBytes": 0,
+      "libraryRead": 0,
+      "stringify": 0,
+      "writes": 0,
+      "files": 21.62999999523163
+    },
+    {
+      "content": 222.75999999046329,
+      "libraryBytes": 0,
+      "libraryRead": 0,
+      "stringify": 0,
+      "writes": 0,
+      "files": 21.020000010728836
+    },
+    {
+      "content": 232.15999999642372,
+      "libraryBytes": 0,
+      "libraryRead": 0,
+      "stringify": 0,
+      "writes": 0,
+      "files": 22.024999976158146
+    },
+    {
+      "content": 265.7199999988079,
+      "libraryBytes": 0,
+      "libraryRead": 0,
+      "stringify": 0,
+      "writes": 0,
+      "files": 21.46000000834465
+    }
+  ]
+}

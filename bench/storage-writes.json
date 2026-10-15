@@ -1,0 +1,53 @@
+{
+  "label": "storage-writes",
+  "summary": {
+    "content": 252.92500001192093,
+    "libraryBytes": 149312000,
+    "libraryRead": 128.00499999523163,
+    "stringify": 0,
+    "writes": 0,
+    "files": 21.530000001192093
+  },
+  "samples": [
+    {
+      "content": 234.6550000011921,
+      "libraryBytes": 149312000,
+      "libraryRead": 118.6899999976158,
+      "stringify": 0,
+      "writes": 0,
+      "files": 30.705000013113025
+    },
+    {
+      "content": 252.92500001192093,
+      "libraryBytes": 149312000,
+      "libraryRead": 115.00499999523164,
+      "stringify": 0,
+      "writes": 0,
+      "files": 23.62000000476837
+    },
+    {
+      "content": 238.62999999523163,
+      "libraryBytes": 149312000,
+      "libraryRead": 128.7199999988079,
+      "stringify": 0,
+      "writes": 0,
+      "files": 21.530000001192093
+    },
+    {
+      "content": 283.97999998927116,
+      "libraryBytes": 149312000,
+      "libraryRead": 128.00499999523163,
+      "stringify": 0,
+      "writes": 0,
+      "files": 21.19999998807907
+    },
+    {
+      "content": 453,
+      "libraryBytes": 149312000,
+      "libraryRead": 174.11500000953674,
+      "stringify": 0,
+      "writes": 0,
+      "files": 21.334999978542328
+    }
+  ]
+}

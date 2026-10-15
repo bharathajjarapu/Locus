@@ -21,11 +21,11 @@ const store = atom({ entries: [] as Entry[], indexing: "" });
 export const useLibrary = store.use;
 let docs: Promise<Doc[]> | undefined;
 
-// Publishes the document list to the UI
-const publish = (list: Doc[]) => store.set({ entries: list.map(({ id, name, size, chunks }) => ({ id, name, size, chunks: chunks.length })) });
+// Startup needs only the directory, not document bodies or embedding vectors.
+const ready = all<Entry>("entries").then((entries) => store.set({ entries }));
 
 // Loads documents from IndexedDB once
-const load = () => (docs ??= all<Doc>().then((list) => (publish(list), list)));
+const load = () => (docs ??= all<Doc>());
 
 // How many documents are in the library
 export const count = () => store.get().entries.length;
@@ -38,9 +38,9 @@ export async function add(name: string, content: string, pdf?: { file: Blob; pag
     const vectors = inline ? [] : await embed(chunks.map((chunk) => chunk.text));
     const doc: Doc = { id: crypto.randomUUID(), name, size: content.length, chunks: chunks.map((chunk, index) => ({ ...chunk, vector: vectors[index] ?? new Float32Array() })), ...(pdf ? { file: pdf.file } : { text: content }) };
     await put(doc);
-    const list = [...(await load()), doc];
-    docs = Promise.resolve(list);
-    publish(list);
+    docs = docs?.then((list) => [...list.filter((item) => item.id !== doc.id), doc]);
+    await ready;
+    store.set({ entries: [...store.get().entries, { id: doc.id, name, size: doc.size, chunks: doc.chunks.length }] });
     return inline ? doc.chunks.map((_, index) => cite(doc, index)) : [];
   } finally {
     store.set({ indexing: "" });
@@ -50,9 +50,9 @@ export async function add(name: string, content: string, pdf?: { file: Blob; pag
 // Deletes a document from the library
 export async function remove(id: string) {
   await del(id);
-  const list = (await load()).filter((doc) => doc.id !== id);
-  docs = Promise.resolve(list);
-  publish(list);
+  docs = docs?.then((list) => list.filter((doc) => doc.id !== id));
+  await ready;
+  store.set({ entries: store.get().entries.filter((doc) => doc.id !== id) });
 }
 
 // Dot product of two unit vectors, which is their cosine similarity
@@ -82,5 +82,3 @@ export async function search(query: string, limit = 4) {
   const chunks = (await load()).flatMap((doc) => doc.chunks.map((chunk, index) => ({ ...chunk, ...cite(doc, index) })));
   return rank(query, chunks, limit);
 }
-
-void load();

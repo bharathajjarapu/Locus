@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { memo, useEffect, useState, type ReactNode } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AiBrain01Icon, ArrowUp02Icon, Cancel01Icon, Copy01Icon, GitForkIcon, PencilEdit01Icon, RefreshIcon, StopIcon, Tick02Icon, VolumeHighIcon } from "@hugeicons/core-free-icons";
 import { Chip } from "@/components/chip";
@@ -9,11 +9,21 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } fro
 import { Pick } from "@/components/pick";
 import { Message, MessageContent, MessageFooter } from "@/components/ui/message";
 import { Spinner } from "@/components/ui/spinner";
+import { atom } from "@/lib/atom";
 import { speak, stop, useVoice } from "@/lib/speech";
 import type { Message as Entry, Source } from "@/lib/store";
 
-// Markdown pulls in KaTeX and Prism, so it loads after first paint
-const Markdown = lazy(() => import("@/components/markdown"));
+type Renderer = typeof import("@/components/markdown").default;
+const formatter = atom({ view: null as Renderer | null, error: "" });
+let loading: Promise<void> | undefined;
+
+// Loads formatting once without Suspense's minimum fallback duration.
+const load = () => (loading ??= import("@/components/markdown").then((module) => {
+  formatter.set({ view: module.default, error: "" });
+}).catch(() => {
+  loading = undefined;
+  formatter.set({ error: "Formatting could not load." });
+}));
 
 // Off-screen rows skip layout and paint, so long chats stay fast while streaming
 const row = "[contain-intrinsic-size:auto_6rem] [content-visibility:auto]";
@@ -22,15 +32,26 @@ const actions = "gap-0.5 transition-opacity md:opacity-0 md:group-hover/message:
 
 type Props = {
   message: Entry;
+  index: number;
   last: boolean;
   busy: boolean;
   nerd: boolean;
   think: boolean;
-  onEdit: (text: string) => void;
-  onFork: () => void;
-  onRetry: (model?: string) => void;
+  onEdit: (text: string, index: number) => void;
+  onFork: (index: number) => void;
+  onRetry: (index: number, model?: string) => void;
   onSource: (source: Source) => void;
 };
+
+// Shows readable text immediately and formats it as soon as the chunk arrives.
+function Markdown(props: Parameters<Renderer>[0]) {
+  const { view: View, error } = formatter.use();
+  useEffect(() => { void load(); }, []);
+  return View ? <View {...props} /> : <>
+    <p className="whitespace-pre-wrap">{props.text}</p>
+    {error && <p role="alert">{error} <Button variant="ghost" size="sm" onClick={() => void load()}>Retry formatting</Button></p>}
+  </>;
+}
 
 // Copies text and briefly shows a tick
 function Copy({ text }: { text: string }) {
@@ -62,7 +83,7 @@ function Fold({ label, open, children }: { label: ReactNode; open?: boolean; chi
 }
 
 // One message in the chat, either from the user or the model
-export function Turn({ message, last, busy, nerd, think, onEdit, onFork, onRetry, onSource }: Props) {
+export const Turn = memo(function Turn({ message, index, last, busy, nerd, think, onEdit, onFork, onRetry, onSource }: Props) {
   const [draft, setDraft] = useState<string | null>(null);
   const voice = useVoice();
   const reading = voice.id === message.id && voice.playing;
@@ -106,7 +127,7 @@ export function Turn({ message, last, busy, nerd, think, onEdit, onFork, onRetry
                   if (event.key === "Escape") setDraft(null);
                   if (event.key === "Enter" && !event.shiftKey && draft.trim()) {
                     event.preventDefault();
-                    onEdit(draft);
+                    onEdit(draft, index);
                   }
                 }}
               />
@@ -114,7 +135,7 @@ export function Turn({ message, last, busy, nerd, think, onEdit, onFork, onRetry
                 <InputGroupButton variant="ghost" size="icon-sm" aria-label="Cancel" onClick={() => setDraft(null)}>
                   <HugeiconsIcon icon={Cancel01Icon} />
                 </InputGroupButton>
-                <InputGroupButton variant="default" size="icon-sm" aria-label="Send" disabled={!draft.trim()} onClick={() => onEdit(draft)}>
+                <InputGroupButton variant="default" size="icon-sm" aria-label="Send" disabled={!draft.trim()} onClick={() => onEdit(draft, index)}>
                   <HugeiconsIcon icon={ArrowUp02Icon} />
                 </InputGroupButton>
               </InputGroupAddon>
@@ -141,9 +162,7 @@ export function Turn({ message, last, busy, nerd, think, onEdit, onFork, onRetry
               </Fold>
             ))}
             {message.content ? (
-              <Suspense fallback={<p className="whitespace-pre-wrap">{message.content}</p>}>
-                <Markdown text={message.content} sources={message.sources} onSource={onSource} />
-              </Suspense>
+              <Markdown text={message.content} sources={message.sources} onSource={onSource} />
             ) : (
               !message.thought && !think && <span className="shimmer">Thinking…</span>
             )}
@@ -171,14 +190,14 @@ export function Turn({ message, last, busy, nerd, think, onEdit, onFork, onRetry
             >
               {reading && voice.loading ? <Spinner aria-label="Loading voice" /> : <HugeiconsIcon icon={reading ? StopIcon : VolumeHighIcon} />}
             </Button>
-            <Button variant="ghost" size="icon-sm" aria-label="Fork" onClick={onFork}>
+            <Button variant="ghost" size="icon-sm" aria-label="Fork" onClick={() => onFork(index)}>
               <HugeiconsIcon icon={GitForkIcon} />
             </Button>
-            <Button variant="ghost" size="icon-sm" aria-label="Retry" disabled={busy} onClick={() => onRetry()}>
+            <Button variant="ghost" size="icon-sm" aria-label="Retry" disabled={busy} onClick={() => onRetry(index)}>
               <HugeiconsIcon icon={RefreshIcon} />
             </Button>
             {last && (
-              <Pick compact label="Retry with another model" items={choices} value="" disabled={busy} onChange={onRetry}>
+              <Pick compact label="Retry with another model" items={choices} value="" disabled={busy} onChange={(id) => onRetry(index, id)}>
                 <HugeiconsIcon icon={AiBrain01Icon} />
               </Pick>
             )}
@@ -193,4 +212,4 @@ export function Turn({ message, last, busy, nerd, think, onEdit, onFork, onRetry
       </MessageContent>
     </Message>
   );
-}
+});

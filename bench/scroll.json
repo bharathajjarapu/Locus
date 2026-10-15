@@ -1,0 +1,201 @@
+{
+  "label": "scroll",
+  "url": "http://localhost:4174",
+  "date": "2026-10-15T08:10:59.700Z",
+  "summary": {
+    "cold": 605.7,
+    "startup": 424.4,
+    "settings": 94.7,
+    "history": 83.3,
+    "input": 33.1,
+    "fullInput": 28.8,
+    "scroll95": 19.3,
+    "scrollMax": 28.4,
+    "nodes": 2400,
+    "panels": {
+      "Files": 105.3,
+      "General": 103.3,
+      "Models": 106.6,
+      "Persona": 110.6,
+      "Skills": 75.8,
+      "Tools": 75.2
+    }
+  },
+  "samples": [
+    {
+      "earlier": 47.90999999642372,
+      "fullInput": 29.24500000476837,
+      "history": 83.60999998450279,
+      "input": 32.49000000953674,
+      "nodes": 2400,
+      "panels": {
+        "Files": 105.25500002503397,
+        "General": 103.25500002503397,
+        "Models": 89.95500001311302,
+        "Persona": 156.0799999833107,
+        "Skills": 75.81000000238419,
+        "Tools": 79.73499998450279
+      },
+      "scroll95": 19.275000005960464,
+      "scrollMax": 25.310000002384182,
+      "settings": 225.15999999642372,
+      "startup": 408.6299999952316,
+      "cold": 642.0600000023842,
+      "timing": {
+        "content": 582.3249999880791,
+        "painted": 642.0600000023842,
+        "ready": 203.69499999284744,
+        "styles": [
+          {
+            "duration": 47.53499999642372,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          },
+          {
+            "duration": 75.40000000596046,
+            "name": "http://localhost:4174/assets/index-Bw6JJCgQ.css"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 48.21500000357628,
+      "fullInput": 29.235000014305115,
+      "history": 85.21500000357628,
+      "input": 31.424999982118607,
+      "nodes": 2400,
+      "panels": {
+        "Files": 102.52500000596046,
+        "General": 103.0949999988079,
+        "Models": 112.21499997377396,
+        "Persona": 104.39500001072884,
+        "Skills": 69.30500000715256,
+        "Tools": 73.61500000953674
+      },
+      "scroll95": 19.555000007152557,
+      "scrollMax": 29.105000019073486,
+      "settings": 95.38499999046326,
+      "startup": 430.3100000023842,
+      "cold": 590.1599999964237,
+      "timing": {
+        "content": 547.044999986887,
+        "painted": 590.1599999964237,
+        "ready": 165.86500000953674,
+        "styles": [
+          {
+            "duration": 22.935000002384182,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          },
+          {
+            "duration": 50.985000014305115,
+            "name": "http://localhost:4174/assets/index-Bw6JJCgQ.css"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 48.00499999523163,
+      "fullInput": 28.25,
+      "history": 83.19999998807907,
+      "input": 33.395000010728836,
+      "nodes": 2400,
+      "panels": {
+        "Files": 103.45500001311302,
+        "General": 102.69999998807909,
+        "Models": 106.55000001192091,
+        "Persona": 108.1550000011921,
+        "Skills": 68.81499999761581,
+        "Tools": 72.06499999761581
+      },
+      "scroll95": 18.0799999833107,
+      "scrollMax": 24.679999977350235,
+      "settings": 94.68000000715256,
+      "startup": 435.5149999856949,
+      "cold": 641.1500000059605,
+      "timing": {
+        "content": 589.3599999845028,
+        "painted": 641.1500000059605,
+        "ready": 208.0949999988079,
+        "styles": [
+          {
+            "duration": 47.480000019073486,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          },
+          {
+            "duration": 83.73500001430511,
+            "name": "http://localhost:4174/assets/index-Bw6JJCgQ.css"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 47.89999997615814,
+      "fullInput": 28.75,
+      "history": 82.58500000834465,
+      "input": 33.275000005960464,
+      "nodes": 2400,
+      "panels": {
+        "Files": 107.3449999988079,
+        "General": 106.96500000357628,
+        "Models": 83.86500000953674,
+        "Persona": 110.57499998807909,
+        "Skills": 98.74499997496603,
+        "Tools": 75.15999999642372
+      },
+      "scroll95": 29.46000000834465,
+      "scrollMax": 30.305000007152557,
+      "settings": 87.0799999833107,
+      "startup": 417.3400000035763,
+      "cold": 593.125,
+      "timing": {
+        "content": 546.7400000095367,
+        "painted": 593.125,
+        "ready": 168.12999999523163,
+        "styles": [
+          {
+            "duration": 26.365000009536743,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          },
+          {
+            "duration": 49.224999994039536,
+            "name": "http://localhost:4174/assets/index-Bw6JJCgQ.css"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 48.17499998211861,
+      "fullInput": 28.794999986886975,
+      "history": 83.31000000238419,
+      "input": 33.125,
+      "nodes": 2400,
+      "panels": {
+        "Files": 106.4050000011921,
+        "General": 106.63999998569489,
+        "Models": 118.38500002026558,
+        "Persona": 117.25,
+        "Skills": 79.94500002264977,
+        "Tools": 84.74000000953674
+      },
+      "scroll95": 19.280000001192093,
+      "scrollMax": 28.36999997496605,
+      "settings": 89.72999998927116,
+      "startup": 424.4399999976158,
+      "cold": 605.7199999988079,
+      "timing": {
+        "content": 554.0249999761581,
+        "painted": 605.7199999988079,
+        "ready": 178.4849999845028,
+        "styles": [
+          {
+            "duration": 35.87999999523163,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          },
+          {
+            "duration": 66.55500000715256,
+            "name": "http://localhost:4174/assets/index-Bw6JJCgQ.css"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,207 @@
+{
+  "label": "fonts",
+  "url": "http://localhost:4180",
+  "date": "2026-10-15T08:22:17.287Z",
+  "summary": {
+    "cold": 461.9,
+    "startup": 1049.6,
+    "settings": 126.2,
+    "source": 100,
+    "history": 83.3,
+    "input": 32.9,
+    "fullInput": 28.2,
+    "scroll95": 18.7,
+    "scrollMax": 30.7,
+    "nodes": 2406,
+    "panels": {
+      "Files": 110.6,
+      "General": 111.8,
+      "Models": 97.5,
+      "Persona": 109.8,
+      "Skills": 75.6,
+      "Tools": 74.2
+    }
+  },
+  "samples": [
+    {
+      "earlier": 48.875,
+      "fullInput": 24.025000005960464,
+      "history": 83.66000002622604,
+      "input": 32.92499998211861,
+      "nodes": 2406,
+      "panels": {
+        "Files": 101.76999998092651,
+        "General": 95.85499998927116,
+        "Models": 110.07000002264977,
+        "Persona": 109.7650000154972,
+        "Skills": 71.98999997973442,
+        "Tools": 74.2049999833107
+      },
+      "scroll95": 19.25,
+      "scrollMax": 29.77999997138977,
+      "settings": 126.20500001311302,
+      "source": 99.89500001072884,
+      "startup": 1052.0200000107288,
+      "cold": 415.6450000107288,
+      "timing": {
+        "content": 361.375,
+        "painted": 415.6450000107288,
+        "ready": 152.94499999284744,
+        "styles": [
+          {
+            "duration": 66.10499998927116,
+            "name": "http://localhost:4180/assets/index-Bw6JJCgQ.css"
+          },
+          {
+            "duration": 1036.0750000178814,
+            "name": "http://localhost:4180/fonts.css"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 48.89000001549721,
+      "fullInput": 29.429999977350235,
+      "history": 81.91499999165535,
+      "input": 33.21000000834465,
+      "nodes": 2406,
+      "panels": {
+        "Files": 113.375,
+        "General": 114.13999998569489,
+        "Models": 97.8599999845028,
+        "Persona": 114.71500000357628,
+        "Skills": 75.61999997496605,
+        "Tools": 76.65999999642372
+      },
+      "scroll95": 18.724999994039536,
+      "scrollMax": 20.979999989271164,
+      "settings": 166.91499999165535,
+      "source": 116.6850000023842,
+      "startup": 1034.2699999809265,
+      "cold": 461.8899999856949,
+      "timing": {
+        "content": 411.9799999892712,
+        "painted": 461.8899999856949,
+        "ready": 160.56999999284744,
+        "styles": [
+          {
+            "duration": 42.480000019073486,
+            "name": "http://localhost:4180/assets/index-Bw6JJCgQ.css"
+          },
+          {
+            "duration": 1023.0049999952316,
+            "name": "http://localhost:4180/fonts.css"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 48.099999994039536,
+      "fullInput": 28.969999998807907,
+      "history": 83.27000001072884,
+      "input": 33.354999989271164,
+      "nodes": 2406,
+      "panels": {
+        "Files": 112.66999998688698,
+        "General": 111.79499998688698,
+        "Models": 97.46500000357628,
+        "Persona": 108.67500001192091,
+        "Skills": 77.46500000357628,
+        "Tools": 75.92500001192093
+      },
+      "scroll95": 18.71500000357628,
+      "scrollMax": 30.719999998807907,
+      "settings": 116.3149999976158,
+      "source": 100,
+      "startup": 1049.625,
+      "cold": 9793.69999998808,
+      "timing": {
+        "content": 428.794999986887,
+        "painted": 9793.69999998808,
+        "ready": 225.3449999988079,
+        "styles": [
+          {
+            "duration": 137.9399999976158,
+            "name": "http://localhost:4180/assets/index-Bw6JJCgQ.css"
+          },
+          {
+            "duration": 1111.550000011921,
+            "name": "http://localhost:4180/fonts.css"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 48.310000002384186,
+      "fullInput": 28.165000021457672,
+      "history": 83.33000001311302,
+      "input": 31.844999998807907,
+      "nodes": 2406,
+      "panels": {
+        "Files": 95.75,
+        "General": 100.50999999046326,
+        "Models": 60.33499997854233,
+        "Persona": 81.16499999165535,
+        "Skills": 69.50500002503395,
+        "Tools": 64.15999999642372
+      },
+      "scroll95": 20.360000014305115,
+      "scrollMax": 34.0450000166893,
+      "settings": 91.7800000011921,
+      "source": 101.32000002264977,
+      "startup": 1033.1949999928474,
+      "cold": 9859.115000009537,
+      "timing": {
+        "content": 331.72999998927116,
+        "painted": 9859.115000009537,
+        "ready": 142.34000000357628,
+        "styles": [
+          {
+            "duration": 56.570000022649765,
+            "name": "http://localhost:4180/assets/index-Bw6JJCgQ.css"
+          },
+          {
+            "duration": 1022.8249999880792,
+            "name": "http://localhost:4180/fonts.css"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 48.00999999046326,
+      "fullInput": 27.394999980926514,
+      "history": 114.85499998927116,
+      "input": 28.360000014305115,
+      "nodes": 2406,
+      "panels": {
+        "Files": 110.5750000178814,
+        "General": 113.625,
+        "Models": 79.93000000715256,
+        "Persona": 110.90000000596046,
+        "Skills": 77.06999999284744,
+        "Tools": 73.89500001072884
+      },
+      "scroll95": 17.169999986886978,
+      "scrollMax": 31.780000001192093,
+      "settings": 140.90499997138977,
+      "source": 99.91499999165536,
+      "startup": 1055.3549999892712,
+      "cold": 461.7800000011921,
+      "timing": {
+        "content": 393.02500000596046,
+        "painted": 461.7800000011921,
+        "ready": 143.4500000178814,
+        "styles": [
+          {
+            "duration": 55.84000000357628,
+            "name": "http://localhost:4180/assets/index-Bw6JJCgQ.css"
+          },
+          {
+            "duration": 1019.130000025034,
+            "name": "http://localhost:4180/fonts.css"
+          }
+        ]
+      }
+    }
+  ]
+}

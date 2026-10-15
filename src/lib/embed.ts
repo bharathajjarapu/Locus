@@ -7,7 +7,7 @@ const dense = "https://huggingface.co/MongoDB/mdbr-leaf-ir/resolve/main/2_Dense/
 // Prefix the model was trained to expect on search queries
 const prefix = "Represent this sentence for searching relevant passages: ";
 
-const wllama = engine();
+let wllama: Awaited<ReturnType<typeof engine>>;
 const store = atom({ status: "idle" as "idle" | "loading" | "ready" | "error", progress: 0, error: "" });
 export const useEmbedder = store.use;
 let loading: Promise<{ weight: Float32Array; bias: Float32Array }> | undefined;
@@ -33,6 +33,7 @@ export function ready() {
   loading ??= (async () => {
     store.set({ status: "loading", progress: 0, error: "" });
     try {
+      wllama ??= await engine();
       const [weights] = await Promise.all([
         projection(),
         wllama.loadModelFromHF(embedding, {

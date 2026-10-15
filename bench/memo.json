@@ -1,0 +1,201 @@
+{
+  "label": "memo",
+  "url": "http://localhost:4174",
+  "date": "2026-10-15T08:09:06.200Z",
+  "summary": {
+    "cold": 671.9,
+    "startup": 445.8,
+    "settings": 123.1,
+    "history": 97.8,
+    "input": 31.9,
+    "fullInput": 28.2,
+    "scroll95": 23.1,
+    "scrollMax": 40.3,
+    "nodes": 2400,
+    "panels": {
+      "Files": 117,
+      "General": 113.8,
+      "Models": 123.7,
+      "Persona": 112,
+      "Skills": 76.5,
+      "Tools": 78
+    }
+  },
+  "samples": [
+    {
+      "earlier": 52.11500000953674,
+      "fullInput": 19.61499997973442,
+      "history": 85.93500000238419,
+      "input": 30.49500000476837,
+      "nodes": 2400,
+      "panels": {
+        "Files": 117.04499998688698,
+        "General": 106.4399999976158,
+        "Models": 124.7950000166893,
+        "Persona": 99.09999999403954,
+        "Skills": 64.60999998450279,
+        "Tools": 83.60499998927116
+      },
+      "scroll95": 24.094999998807907,
+      "scrollMax": 49.17500001192093,
+      "settings": 140.19999998807907,
+      "startup": 426.1899999976158,
+      "cold": 556.455000013113,
+      "timing": {
+        "content": 501.1299999952316,
+        "painted": 556.455000013113,
+        "ready": 135.65000000596046,
+        "styles": [
+          {
+            "duration": 19.264999985694885,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          },
+          {
+            "duration": 36.65999999642372,
+            "name": "http://localhost:4174/assets/index-Bw6JJCgQ.css"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 63.03499999642372,
+      "fullInput": 28.735000014305115,
+      "history": 97.7650000154972,
+      "input": 32.770000010728836,
+      "nodes": 2400,
+      "panels": {
+        "Files": 75.375,
+        "General": 104,
+        "Models": 89.49500000476837,
+        "Persona": 129.81999999284744,
+        "Skills": 89.61500000953674,
+        "Tools": 77.38999998569489
+      },
+      "scroll95": 20.0799999833107,
+      "scrollMax": 37.34000000357628,
+      "settings": 93.33999997377396,
+      "startup": 442.2700000107288,
+      "cold": 594.2150000035763,
+      "timing": {
+        "content": 542.1749999821186,
+        "painted": 594.2150000035763,
+        "ready": 170.46500000357628,
+        "styles": [
+          {
+            "duration": 2.290000021457672,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          },
+          {
+            "duration": 47.40500000119209,
+            "name": "http://localhost:4174/assets/index-Bw6JJCgQ.css"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 62.79499998688698,
+      "fullInput": 28.160000026226044,
+      "history": 96.25,
+      "input": 31.884999990463257,
+      "nodes": 2400,
+      "panels": {
+        "Files": 76.06500002741814,
+        "General": 113.82499998807909,
+        "Models": 89.69499999284744,
+        "Persona": 111.9849999845028,
+        "Skills": 77.87000000476837,
+        "Tools": 74.9200000166893
+      },
+      "scroll95": 23.064999997615818,
+      "scrollMax": 34.145000010728836,
+      "settings": 141.2199999988079,
+      "startup": 500.5300000011921,
+      "cold": 786.3199999928474,
+      "timing": {
+        "content": 690.2299999892712,
+        "painted": 786.3199999928474,
+        "ready": 220.875,
+        "styles": [
+          {
+            "duration": 40.25,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          },
+          {
+            "duration": 86.23499998450279,
+            "name": "http://localhost:4174/assets/index-Bw6JJCgQ.css"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 63.48499998450279,
+      "fullInput": 26.229999989271164,
+      "history": 140.83499997854233,
+      "input": 23.794999986886975,
+      "nodes": 2400,
+      "panels": {
+        "Files": 123.45999997854231,
+        "General": 135.0649999976158,
+        "Models": 163.3299999833107,
+        "Persona": 121.3449999988079,
+        "Skills": 75.36500000953674,
+        "Tools": 87.76500001549721
+      },
+      "scroll95": 33.685000002384186,
+      "scrollMax": 40.28499999642372,
+      "settings": 100.40000000596046,
+      "startup": 461.1749999821186,
+      "cold": 774.2399999797344,
+      "timing": {
+        "content": 697.9099999964237,
+        "painted": 774.2399999797344,
+        "ready": 279.9599999785423,
+        "styles": [
+          {
+            "duration": 58.439999997615814,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          },
+          {
+            "duration": 99.33500000834464,
+            "name": "http://localhost:4174/assets/index-Bw6JJCgQ.css"
+          }
+        ]
+      }
+    },
+    {
+      "earlier": 63.125,
+      "fullInput": 28.955000013113025,
+      "history": 98.1099999845028,
+      "input": 33.30500000715256,
+      "nodes": 2400,
+      "panels": {
+        "Files": 118.37999999523164,
+        "General": 119.55500000715256,
+        "Models": 123.6899999976158,
+        "Persona": 81.28499999642372,
+        "Skills": 76.46500000357628,
+        "Tools": 78.01500001549721
+      },
+      "scroll95": 22.055000007152557,
+      "scrollMax": 50.185000002384186,
+      "settings": 123.14500001072884,
+      "startup": 445.830000013113,
+      "cold": 671.8900000154972,
+      "timing": {
+        "content": 608.7849999964237,
+        "painted": 671.8900000154972,
+        "ready": 200.28999999165535,
+        "styles": [
+          {
+            "duration": 34.27499997615814,
+            "name": "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+          },
+          {
+            "duration": 65.40999999642372,
+            "name": "http://localhost:4174/assets/index-Bw6JJCgQ.css"
+          }
+        ]
+      }
+    }
+  ]
+}

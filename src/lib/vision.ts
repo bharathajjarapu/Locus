@@ -9,7 +9,7 @@ let queue: Promise<unknown> = Promise.resolve();
 
 // Reads images with a small vision model; it loads on demand and is freed afterwards (more than two threads hang on images)
 async function run(images: Blob[]) {
-  const wllama = engine();
+  const wllama = await engine();
   try {
     await wllama.loadModelFromHF({ repo, file, mmprojFile }, { n_ctx: 4096, n_gpu_layers: 0, n_threads: 2 });
     const texts: string[] = [];

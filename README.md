@@ -322,6 +322,8 @@ wllama runs llama.cpp in a pthread WebAssembly worker, so it needs cross-origin 
 
 ### Performance
 
+Interface benchmarks, per-change measurements and commands are in [bench/README.md](bench/README.md). Recent history opens in batches, unchanged replies skip rendering, fonts no longer block startup, and model runtimes load on demand.
+
 - All cores for decode, about 60% faster than wllama's half-core default
 - One worker per model, no reload when embedding or reading images
 - Vision reader freed after use

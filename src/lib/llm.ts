@@ -15,7 +15,13 @@ type State = {
   error?: string;
 };
 
-const wllama = engine();
+let wllama: Awaited<ReturnType<typeof engine>>;
+let creating: Promise<typeof wllama> | undefined;
+// Shares one lazily created chat engine across loading and cache operations.
+const instance = () => (creating ??= engine().then((value) => (wllama = value)).catch((error) => {
+  creating = undefined;
+  throw error;
+}));
 // The model selected in saved options
 const active = () => find(options().model);
 const store = atom<State>({ model: active(), think: options().think && active().think, busy: false, status: "idle", progress: 0 });
@@ -87,6 +93,7 @@ export function load() {
     const { id, repo, file, mmproj } = active();
     update({ model: active(), status: "loading", progress: 0, error: undefined });
     try {
+      await instance();
       const { compute } = options();
       const adapter = compute === "cpu" ? null : await navigator.gpu?.requestAdapter().catch(() => null);
       // ponytail: auto picks GPU by vendor only, since small models run slower on most integrated GPUs; add a speed test if it misjudges
@@ -122,7 +129,7 @@ export const preload = () => load().catch(() => {});
 // Frees the engine after any load in progress finishes, so two loads never share it
 async function unload() {
   await loading?.catch(() => {});
-  await wllama.exit();
+  await wllama?.exit();
   loading = undefined;
 }
 
@@ -175,6 +182,7 @@ export const backend = () => (gpu ? "WebGPU" : `CPU · ${wllama.getNumThreads()}
 
 // Lists the downloaded copies of the catalog models
 const stored = async () => {
+  await instance();
   const copies = await wllama.modelManager.getModels();
   return models.map((item) => ({ id: item.id, copy: copies.find((entry) => entry.url.includes(item.file)) }));
 };
