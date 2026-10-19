@@ -1,0 +1,147 @@
+1
+00:00:04,100 --> 00:00:08,739
+Locus combines local chat, document retrieval, and voice inside a browser.
+
+2
+00:00:08,919 --> 00:00:16,253
+The workspace assembles context and manages tools; document processing and model execution are separate subsystems.
+
+3
+00:00:16,433 --> 00:00:24,570
+Follow the labeled connections: files become searchable passages, messages reach the chat worker, and responses return to the interface.
+
+4
+00:00:26,167 --> 00:00:29,931
+Chat weights come from the catalog or a local G G U F file.
+
+5
+00:00:30,111 --> 00:00:36,466
+Six parallel download lanes save sixteen mebibyte ranges, allowing interrupted downloads to resume.
+
+6
+00:00:36,646 --> 00:00:42,450
+The completed model is cached in private browser storage, then loaded by the worker through wllama.
+
+7
+00:00:44,033 --> 00:00:52,661
+Chat starts by expanding saved slash commands, then combines persona instructions, remembered facts, recent messages, and attachments.
+
+8
+00:00:52,841 --> 00:00:59,225
+Older saved messages can become a summary, preserving recent messages within the application's character budget.
+
+9
+00:00:59,405 --> 00:01:06,427
+The agent sends this conversation, sampling settings, and available tool schemas to the chat completion API.
+
+10
+00:01:08,017 --> 00:01:17,211
+Inside the chat worker, llama dot C P P runs the selected model through WebAssembly, using CPU or supported WebGPU execution.
+
+11
+00:01:17,391 --> 00:01:27,427
+The loaded model graph produces predictions; sampling selects each next token using the supplied context and preceding tokens, as this schematic equation shows.
+
+12
+00:01:27,607 --> 00:01:34,536
+Callbacks return text, reasoning, and tool call fragments; the interface batches updates to animation frames.
+
+13
+00:01:36,133 --> 00:01:44,819
+PDF and Office readers extract text; images use a vision model, while long documents are split into passages near one thousand characters.
+
+14
+00:01:44,999 --> 00:01:55,620
+The separate embedding worker produces a pooled vector, then JavaScript applies a learned projection from three hundred eighty four to seven hundred sixty eight dimensions and normalizes it.
+
+15
+00:01:55,800 --> 00:02:00,279
+Indexed D B keeps each passage with its vector and original source position.
+
+16
+00:02:01,867 --> 00:02:09,201
+Library search embeds the prefixed query and ranks passages by both B M twenty five keywords and cosine similarity.
+
+17
+00:02:09,381 --> 00:02:16,045
+Reciprocal rank fusion adds one over sixty plus each zero based rank, combining the two positive score lists.
+
+18
+00:02:16,225 --> 00:02:19,853
+The top four passages return as source linked context for the model.
+
+19
+00:02:21,450 --> 00:02:26,964
+A tool capable model can request library search, calculations, memory, or web access.
+
+20
+00:02:27,144 --> 00:02:32,768
+Permission rules decide whether the call runs; its result becomes another conversation message.
+
+21
+00:02:32,948 --> 00:02:40,731
+Three tool rounds are allowed before a final generation without tools, so retrieval and other actions fit inside one bounded agent loop.
+
+22
+00:02:42,317 --> 00:02:46,816
+Dictation starts with mono microphone samples, captured in an audio worklet.
+
+23
+00:02:46,996 --> 00:02:55,443
+Mean squared energy separates speech from silence; the app flushes phrases after one point two seconds of quiet or thirteen seconds of audio.
+
+24
+00:02:55,623 --> 00:03:02,423
+A worker resamples to sixteen kilohertz, runs Moonshine Tiny locally, and returns English text to the composer.
+
+25
+00:03:04,017 --> 00:03:08,194
+Read aloud takes the response in the opposite direction, from text to audio.
+
+26
+00:03:08,374 --> 00:03:18,480
+Locus removes Markdown and splits text into short chunks; Sano T T S converts text into phonemes, then runs its duration, acoustic, and decoder models.
+
+27
+00:03:18,660 --> 00:03:23,450
+Generated samples play through Web Audio using the selected voice and playback rate.
+
+28
+00:03:25,033 --> 00:03:29,363
+Memory reuses the embedding pipeline to store facts as text and vectors.
+
+29
+00:03:29,543 --> 00:03:35,094
+A new fact replaces an existing one when cosine similarity exceeds zero point nine three.
+
+30
+00:03:35,274 --> 00:03:42,817
+Recall supplies all facts when there are five or fewer; otherwise hybrid retrieval selects five relevant facts for the prompt.
+
+31
+00:03:44,417 --> 00:03:48,559
+The output interface separates response text from model supplied reasoning.
+
+32
+00:03:48,739 --> 00:03:55,340
+Citations reopen the exact retrieved passage, with the original PDF available beside the conversation.
+
+33
+00:03:55,520 --> 00:04:03,178
+Generated HTML or S V G can open in an artifact viewer, with a sandboxed preview, code view, and download.
+
+34
+00:04:04,767 --> 00:04:10,849
+For a document question, readers extract content and the embedding pipeline builds the local library.
+
+35
+00:04:11,029 --> 00:04:14,565
+The workspace assembles the question and context for the chat worker.
+
+36
+00:04:14,745 --> 00:04:18,556
+A permitted library search brings ranked passages back into generation.
+
+37
+00:04:18,736 --> 00:04:23,668
+The answer streams to chat with source links, and can be read aloud by the separate speech engine.

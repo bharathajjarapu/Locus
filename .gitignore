@@ -37,3 +37,5 @@ bun-debug.log*
 
 # typescript
 *.tsbuildinfo
+/video/
+/.impeccable/

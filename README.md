@@ -2,6 +2,12 @@
 
 Private AI chat running entirely in the browser. GGUF models execute through [wllama](https://github.com/ngxson/wllama) (llama.cpp compiled to WebAssembly) on CPU or WebGPU. No server, no telemetry.
 
+<video controls crossorigin="anonymous" width="960" src="https://github.com/bharathajjarapu/Locus/raw/refs/heads/main/results/Locus.webm" poster="https://raw.githubusercontent.com/bharathajjarapu/Locus/refs/heads/main/results/Locus.png" aria-label="Locus technical explainer">
+  <track kind="captions" src="https://raw.githubusercontent.com/bharathajjarapu/Locus/refs/heads/main/results/Locus.vtt" srclang="en" label="English">
+</video>
+
+[Watch or download the explainer](https://github.com/bharathajjarapu/Locus/raw/refs/heads/main/results/Locus.webm) · [Architecture](results/Architecture.png) · [Subtitles](results/Locus.srt)
+
 ## Features
 
 - Local inference, OPFS-cached weights
@@ -27,8 +33,16 @@ Private AI chat running entirely in the browser. GGUF models execute through [wl
 | [LFM2.5 230M](https://huggingface.co/LiquidAI/LFM2.5-230M-GGUF) | 149 MB | Fast chat |
 | [LFM2.5 VL 450M](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF) | 332 MB | Vision |
 | [MiniCPM5 1B](https://huggingface.co/openbmb/MiniCPM5-1B-GGUF) | 688 MB | Thinking, tools |
+| [Nasledie 0.8B](https://huggingface.co/aemmeath/NasledieLab-Qwen3.5-0.8B-GPT-6-Astra-Luna-Fable-5.1-Opus-5.5-distill-Karpy-GGUF) | 529 MB | Experimental chat, thinking, tools |
+| [Bonsai 2 2B](https://huggingface.co/prism-ml/Ternary-Bonsai-2-2B-gguf) | 911 MB | Vision, thinking, tools |
 
 A model is one row in `src/lib/models.ts`: repo, file, optional `mmproj`, capability flags, sampling preset.
+
+Nasledie is an optional Q4_K_M text model using the existing loader. Its GGUF metadata confirms `qwen35`, 320 tensors and a 262144-token training context. Locus keeps its 8192-token default context and caps replies at 4096 tokens. The embedded template always opens `<think>` and has no `enable_thinking` switch, so Locus hides that switch and preserves reasoning output. Sampling follows the [base Qwen3.5 thinking recommendations](https://huggingface.co/Qwen/Qwen3.5-0.8B#best-practices). Tool calling is enabled because its embedded template supports tool definitions, calls and responses; reliability on this distill is untested. Native vision is unavailable because no image projector ships in this upload. Image attachments still use Locus's separate vision reader. The [source repository](https://huggingface.co/NasledieLab/Qwen3.5-0.8B-GPT-6-Astra-Luna-Fable-5.1-Opus-5.5-distill-Karpy) declares Apache-2.0 but supplies no training details or evaluations. Teacher provenance, quality after quantization, browser inference and tokens per second have not been verified for this distill. Treat it as a chat experiment rather than an established reasoning upgrade. Qwen warns that its 0.8B base can loop in thinking mode; Stop interrupts generation.
+
+Bonsai uses the upstream-compatible Q2_0 language weights, 547 MB, and the recommended Q8_0 image projector, 365 MB. PQ2_0 and PTQ1_0 need PrismML's fork; all three packings contain the same ternary weights. No verified INT4/INT8 language checkpoint or corresponding quality comparison was found for this release. Its Q8_0 projector is an image encoder, not an INT8 language model.
+
+Bonsai starts with thinking off for short replies. The Think button applies the author's thinking sampler; turning it off restores the normal sampler. Presence penalty and its 64-token window follow the [model card](https://huggingface.co/prism-ml/Ternary-Bonsai-2-2B-gguf). Thinking permits 8192 output tokens; choose a 16K or larger context for long reasoning and conversation history. The 262K training context is not allocated by default.
 
 ### Your own model
 
@@ -76,6 +90,10 @@ Settings → Models uses one picker with sampling controls collapsed. Run check 
 ## Wllama integration
 
 `engine()` in `engine.ts` is the single factory for `new Wllama(...)`. Each call yields an independent llama.cpp WebAssembly instance in its own worker, with its own weights and KV cache. Chat (`llm.ts`), embedder (`embed.ts`) and vision reader (`vision.ts`) each own one.
+
+The pinned official browser runtime in [src/assets/wllama](src/assets/wllama/README.md) includes Bonsai's Hadamard/sign-flip support, which is not in the current npm release. Both standard and compatibility runtimes are served locally. The existing wllama npm wrapper is unchanged. Chat uses one request slot and flash attention; embeddings and the separate vision reader keep their own settings.
+
+The [community WebGPU demo](https://huggingface.co/spaces/webml-community/ternary-bonsai-2-hermes-webgpu/tree/main) uses its own engine and kernels. Locus keeps wllama's existing streaming, tool parser, image input and cache instead of adding that second runtime.
 
 ```mermaid
 sequenceDiagram
@@ -322,7 +340,7 @@ wllama runs llama.cpp in a pthread WebAssembly worker, so it needs cross-origin 
 
 ### Performance
 
-Interface benchmarks, per-change measurements and commands are in [bench/README.md](bench/README.md). Recent history opens in batches, unchanged replies skip rendering, fonts no longer block startup, and model runtimes load on demand.
+Recent history opens in batches, unchanged replies skip rendering, fonts no longer block startup, and model runtimes load on demand.
 
 - All cores for decode, about 60% faster than wllama's half-core default
 - One worker per model, no reload when embedding or reading images

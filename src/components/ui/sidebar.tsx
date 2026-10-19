@@ -54,7 +54,7 @@ export function Sidebar({ children }: ComponentProps<"div">) {
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/10 transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0" />
-          <Dialog.Popup className={cn(panel, "fixed inset-y-0 left-0 z-50 w-72 shadow-lg transition duration-200 data-ending-style:-translate-x-10 data-ending-style:opacity-0 data-starting-style:-translate-x-10 data-starting-style:opacity-0")}>
+          <Dialog.Popup className={cn(panel, "fixed inset-y-0 left-0 z-50 w-72 max-w-[calc(100%-3rem)] shadow-lg transition-[transform,opacity] duration-200 ease-(--ease-out) outline-none data-ending-style:-translate-x-10 data-ending-style:opacity-0 data-starting-style:-translate-x-10 data-starting-style:opacity-0 motion-reduce:data-ending-style:translate-x-0 motion-reduce:data-starting-style:translate-x-0")}>
             <Dialog.Title className="sr-only">Chats</Dialog.Title>
             {children}
           </Dialog.Popup>
@@ -66,7 +66,7 @@ export function Sidebar({ children }: ComponentProps<"div">) {
   return (
     <>
       <div className={cn("w-64 shrink-0 transition-[width] duration-200 ease-linear", !open && "w-0")} />
-      <div className={cn(panel, "fixed inset-y-0 left-0 z-10 w-64 border-r transition-[left] duration-200 ease-linear", !open && "-left-64")}>{children}</div>
+      <div inert={!open} className={cn(panel, "fixed inset-y-0 left-0 z-10 w-64 border-r transition-transform duration-200 ease-(--ease-out)", !open && "-translate-x-full")}>{children}</div>
     </>
   );
 }
@@ -92,7 +92,7 @@ export const SidebarHeader = ({ className, ...props }: ComponentProps<"div">) =>
 export const SidebarFooter = SidebarHeader;
 
 export const SidebarContent = ({ className, ...props }: ComponentProps<"div">) => (
-  <div className={cn("no-scrollbar flex min-h-0 flex-1 flex-col overflow-auto", className)} {...props} />
+  <div className={cn("no-scrollbar flex min-h-0 flex-1 flex-col overflow-auto overscroll-contain", className)} {...props} />
 );
 
 export const SidebarGroup = ({ className, ...props }: ComponentProps<"div">) => <div className={cn("flex w-full min-w-0 flex-col p-2", className)} {...props} />;
@@ -109,6 +109,7 @@ export const SidebarMenuItem = ({ className, ...props }: ComponentProps<"li">) =
 // Full-width row button, highlighted when active
 export const SidebarMenuButton = ({ isActive, className, ...props }: ComponentProps<"button"> & { isActive?: boolean }) => (
   <button
+    data-slot="sidebar-button"
     data-active={isActive || undefined}
     className={cn(
       "flex h-8 w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring data-active:bg-sidebar-accent data-active:font-medium [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate",
@@ -121,6 +122,7 @@ export const SidebarMenuButton = ({ isActive, className, ...props }: ComponentPr
 // Small icon button shown on row hover, always visible on touch
 export const SidebarMenuAction = ({ className, ...props }: ComponentProps<"button">) => (
   <button
+    data-slot="sidebar-action"
     className={cn(
       "absolute top-1.5 right-1 flex size-5 items-center justify-center rounded-md outline-hidden transition-opacity hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring md:opacity-0 md:group-focus-within/item:opacity-100 md:group-hover/item:opacity-100 [&>svg]:size-4",
       className,

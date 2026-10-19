@@ -43,22 +43,24 @@ export function Voice() {
 
   return (
     <>
-      <Field orientation="horizontal">
+      <Field orientation="horizontal" className="flex-col items-stretch sm:flex-row sm:items-center">
         <FieldLabel>Read-aloud voice</FieldLabel>
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
           <Pick label="Read-aloud voice" items={speakers} value={selected} disabled={playing} onChange={setSpeaker} />
           <Button variant="outline" size="sm" disabled={playing && id !== "preview"} onClick={() => playing ? stop("preview") : void speak("preview", "Hello. This is your voice in Locus.")}>{playing && id === "preview" ? loading ? "Cancel" : "Stop" : "Test"}</Button>
           <Button variant="ghost" size="sm" disabled={!total || playing} onClick={unloadVoice}>Unload{total ? ` ${(total / 1e6).toFixed(1)} MB` : ""}</Button>
         </div>
       </Field>
-      <Field orientation="horizontal">
+      <Field orientation="horizontal" className="flex-wrap">
         <FieldLabel>Playback speed</FieldLabel>
-        <Slider className="ml-auto data-[orientation=horizontal]:w-40" aria-label="Playback speed" min={0.75} max={1.5} step={0.05} value={speed} disabled={playing} onValueChange={(value) => setRate(String(value))} />
+        <Slider className="ml-auto data-[orientation=horizontal]:w-28 sm:data-[orientation=horizontal]:w-40" aria-label="Playback speed" min={0.75} max={1.5} step={0.05} value={speed} disabled={playing} onValueChange={(value) => setRate(String(value))} />
         <span className="w-12 text-right text-sm tabular-nums">{speed.toFixed(2)}×</span>
       </Field>
       <Field orientation="horizontal">
-        <FieldLabel>Dictation model</FieldLabel>
-        <span className="ml-auto text-sm text-muted-foreground">Moonshine Tiny · 34.1 MB</span>
+        <div className="min-w-0 flex-1">
+          <FieldLabel>Dictation model</FieldLabel>
+          <p className="mt-1 text-xs text-muted-foreground">Moonshine Tiny · 34.1 MB</p>
+        </div>
         {size ? (
           <Button variant="ghost" size="sm" disabled={dictating} onClick={() => void clear()}>Delete</Button>
         ) : (

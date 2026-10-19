@@ -100,6 +100,9 @@ export function load() {
       gpu = !!adapter && (compute === "gpu" || ["nvidia", "apple"].includes(adapter.info?.vendor));
       const config = {
         n_ctx: options().n_ctx,
+        // Chat requests are serialized; one slot avoids extra recurrent state and context splitting.
+        n_parallel: 1,
+        flash_attn: true,
         // wllama defaults to half the cores; all of them decode ~60% faster, but reading images hangs with more than two
         ...(!gpu && { n_gpu_layers: 0, n_threads: mmproj ? 2 : navigator.hardwareConcurrency }),
       };
@@ -136,9 +139,9 @@ async function unload() {
 // Swaps to another model, applying its recommended sampling
 export async function pick(id: string) {
   const next = find(id);
-  setOptions({ ...options(), ...next.preset, model: next.id, think: next.think });
+  setOptions({ ...options(), think: next.think, ...next.preset, model: next.id });
   await unload();
-  update({ model: next, think: next.think, status: "idle", progress: 0, error: undefined });
+  update({ model: next, think: options().think, status: "idle", progress: 0, error: undefined });
   await preload();
 }
 
@@ -164,8 +167,10 @@ export async function adopt(dropped: File[]) {
 
 // Turns the model's thinking on or off
 export function toggleThink() {
-  setOptions({ ...options(), think: !get().think });
-  update({ think: !get().think });
+  const think = !get().think;
+  const model = active();
+  setOptions({ ...options(), ...(model.reasoning && (think ? model.reasoning : model.preset)), think });
+  update({ think });
 }
 
 // Whether thinking is on for the selected model

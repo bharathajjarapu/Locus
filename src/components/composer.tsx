@@ -31,7 +31,7 @@ export const choices = models.map((item) => ({ value: item.id, label: item.name 
 
 // Input box style shared with message editing
 export const frame =
-  "border-2 bg-card/90 dark:bg-card/90 dark:border-secondary has-[[data-slot=input-group-control]:focus-visible]:ring-0 dark:has-[[data-slot=input-group-control]:focus-visible]:border-ring";
+  "rounded-2xl border border-input bg-card dark:bg-card has-disabled:bg-card has-disabled:opacity-100 dark:has-disabled:bg-card";
 
 export function Composer({ input, setInput, busy, tall, files, onAttach, onDetach, onSend, onQueue, onStop }: Props) {
   const { model, think, status, progress, error } = useModel();
@@ -44,7 +44,6 @@ export function Composer({ input, setInput, busy, tall, files, onAttach, onDetac
   const matches = /^\/\S*$/.test(input) ? skills().filter((skill) => skill.name && skill.name.startsWith(input.slice(1))) : [];
   const reading = files.some((file) => file.status === "reading" || file.status === "indexing");
 
-  // The pieces are shared by the tall home layout and the compact chat layout
   const attach = (
     <>
       <InputGroupButton variant="ghost" size="icon-sm" aria-label="Attach files" onClick={() => picker.current?.click()}>
@@ -66,16 +65,16 @@ export function Composer({ input, setInput, busy, tall, files, onAttach, onDetac
     <>
       {model.think && (
         <InputGroupButton variant={think ? "secondary" : "ghost"} size="xs" aria-label="Thinking" aria-pressed={think} disabled={busy} onClick={toggleThink}>
-          <HugeiconsIcon icon={AiBrain01Icon} /> Think
+          <HugeiconsIcon icon={AiBrain01Icon} /><span className="hidden sm:inline">Think</span>
         </InputGroupButton>
       )}
       <Pick compact label="Model" items={choices} value={model.id} onChange={(id) => void pick(id)} disabled={busy || status === "loading"}>
         {status === "loading" ? (
-          <span className="fill animate-pulse" style={{ "--p": `${Math.round(progress * 100)}%` } as CSSProperties}>
+          <span className="fill max-w-36 truncate animate-pulse" style={{ "--p": `${Math.round(progress * 100)}%` } as CSSProperties}>
             {model.name}
           </span>
         ) : (
-          model.name
+          <span className="max-w-36 truncate" title={model.name}>{model.name}</span>
         )}
       </Pick>
       {input.trim() && !speech.listening ? (
@@ -103,10 +102,11 @@ export function Composer({ input, setInput, busy, tall, files, onAttach, onDetac
   const textarea = (
     <InputGroupTextarea
       autoFocus
+      aria-label="Message"
       value={input}
       placeholder={busy ? "Enter to steer, Tab to queue…" : "Message…"}
       rows={1}
-      className={tall ? "max-h-48 min-h-9" : "max-h-48 min-h-0"}
+      className={cn("max-h-48 px-4 pt-4 pb-3 text-base leading-6", tall ? "min-h-24" : "min-h-14")}
       onChange={(event) => setInput(() => event.target.value)}
       onKeyDown={(event) => {
         if (event.key === "Tab" && busy && input.trim()) {
@@ -151,7 +151,7 @@ export function Composer({ input, setInput, busy, tall, files, onAttach, onDetac
         </Alert>
       )}
       <InputGroup
-        className={cn(frame, files.length > 0 && !tall && "flex-wrap", dragging && "ring-2 ring-ring")}
+        className={cn(frame, dragging && "ring-2 ring-ring")}
         onDragOver={(event) => {
           event.preventDefault();
           setDragging(true);
@@ -170,25 +170,11 @@ export function Composer({ input, setInput, busy, tall, files, onAttach, onDetac
             ))}
           </div>
         )}
-        {tall ? (
-          <>
-            {textarea}
-            <InputGroupAddon align="block-end" className="justify-between">
-              {attach}
-              <div className="flex items-center gap-1">{controls}</div>
-            </InputGroupAddon>
-          </>
-        ) : (
-          <>
-            <InputGroupAddon align="inline-start" className="self-end">
-              {attach}
-            </InputGroupAddon>
-            {textarea}
-            <InputGroupAddon align="inline-end" className="self-end">
-              {controls}
-            </InputGroupAddon>
-          </>
-        )}
+        {textarea}
+        <InputGroupAddon align="block-end" className="justify-between gap-1 px-2.5 pb-2.5">
+          {attach}
+          <div className="flex min-w-0 items-center gap-1">{controls}</div>
+        </InputGroupAddon>
       </InputGroup>
     </div>
   );

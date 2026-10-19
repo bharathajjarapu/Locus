@@ -4,8 +4,10 @@
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant keyboard (&:where([data-keyboard] *));
 
 :root {
+  color-scheme: light;
   --radius: 0.5rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -24,7 +26,8 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.85 0 0);
   --input: oklch(0.85 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.52 0 0);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -36,6 +39,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -53,7 +57,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 20%);
   --input: oklch(1 0 0 / 20%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.708 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -106,6 +110,18 @@
   body {
     @apply bg-background font-sans text-foreground antialiased;
   }
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
+  }
+  button, a, [role="button"] {
+    touch-action: manipulation;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--foreground) 18%, transparent);
+    color: var(--foreground);
+  }
 }
 
 /* Scrolls without showing a scrollbar */
@@ -127,6 +143,37 @@
 
 .fade::-webkit-scrollbar {
   display: none;
+}
+
+@media (pointer: coarse) {
+  [data-slot="button"],
+  [data-slot="combobox-trigger"],
+  [data-slot="tabs-trigger"],
+  [data-slot="combobox-item"],
+  [data-slot="sidebar-button"],
+  [data-slot="input"] {
+    min-height: 44px;
+  }
+  [data-slot="button"],
+  [data-slot="combobox-trigger"] {
+    min-width: 44px;
+  }
+  [data-slot="input-group"] {
+    min-height: 44px;
+  }
+  [data-slot="sidebar-action"] {
+    top: 0;
+    width: 44px;
+    height: 44px;
+    opacity: 1;
+  }
+  [data-slot="switch"]::after,
+  [data-slot="slider-thumb"]::after {
+    inset: 50% auto auto 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
 }
 
 /* pdf.js text runs overlay the canvas for selection and exact passage positions. */
@@ -230,6 +277,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+  }
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*),

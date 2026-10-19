@@ -48,7 +48,7 @@ export function Chats({ chats, active, onSelect, onNew, onSearch, onSettings, on
   // Menu row with an icon and label
   const link = (icon: typeof Add01Icon, label: string, action: () => void) => (
     <SidebarMenuItem>
-      <SidebarMenuButton onClick={close(action)}>
+      <SidebarMenuButton className="h-10" onClick={close(action)}>
         <HugeiconsIcon icon={icon} /> {label}
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -70,16 +70,16 @@ export function Chats({ chats, active, onSelect, onNew, onSearch, onSettings, on
         />
       ) : (
         <>
-          <SidebarMenuButton isActive={chat.id === active} className="pr-[4.5rem]" onClick={close(() => onSelect(chat.id))}>
+          <SidebarMenuButton isActive={chat.id === active} aria-current={chat.id === active ? "page" : undefined} title={chat.name} className="h-10 pr-[5.25rem] [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:pr-36" onClick={close(() => onSelect(chat.id))}>
             <span>{chat.name}</span>
           </SidebarMenuButton>
-          <SidebarMenuAction aria-label={chat.pinned ? "Unpin" : "Pin"} aria-pressed={!!chat.pinned} className="right-14" onClick={() => onPin(chat.id)}>
+          <SidebarMenuAction aria-label={chat.pinned ? "Unpin" : "Pin"} aria-pressed={!!chat.pinned} title={chat.pinned ? "Unpin chat" : "Pin chat"} className="top-2 right-14 [@media(pointer:coarse)]:right-24" onClick={() => onPin(chat.id)}>
             <HugeiconsIcon icon={Pin02Icon} />
           </SidebarMenuAction>
-          <SidebarMenuAction aria-label="Rename" className="right-7" onClick={() => setEditing(chat.id)}>
+          <SidebarMenuAction aria-label="Rename" title="Rename chat" className="top-2 right-7 [@media(pointer:coarse)]:right-12" onClick={() => setEditing(chat.id)}>
             <HugeiconsIcon icon={PencilEdit01Icon} />
           </SidebarMenuAction>
-          <SidebarMenuAction aria-label="Delete" className="hover:text-destructive" onClick={() => onDelete(chat.id)}>
+          <SidebarMenuAction aria-label="Delete" title="Delete chat" className="top-2 hover:text-destructive [@media(pointer:coarse)]:right-0" onClick={() => onDelete(chat.id)}>
             <HugeiconsIcon icon={Delete02Icon} />
           </SidebarMenuAction>
         </>
@@ -97,22 +97,20 @@ export function Chats({ chats, active, onSelect, onNew, onSearch, onSettings, on
 
   return (
     <Sidebar>
-      <SidebarHeader>
+      <SidebarHeader className="gap-4 px-3 pt-5 pb-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="h-auto text-lg font-semibold" onClick={close(onNew)}>
-              Locus
-            </SidebarMenuButton>
+            <div className="flex h-9 items-center px-2 text-base font-semibold tracking-tight">Locus</div>
           </SidebarMenuItem>
           {link(Add01Icon, "New chat", onNew)}
-          {link(Search01Icon, "Search", onSearch)}
+          {link(Search01Icon, "Search chats", onSearch)}
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="px-1 pt-2">
         {group("Pinned", chats.filter((chat) => chat.pinned))}
         {group("Chats", chats.filter((chat) => !chat.pinned))}
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
         <SidebarMenu>{link(Settings02Icon, "Settings", onSettings)}</SidebarMenu>
       </SidebarFooter>
     </Sidebar>

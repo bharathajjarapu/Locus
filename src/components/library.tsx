@@ -40,58 +40,63 @@ export function Library() {
 
   return (
     <FieldGroup>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <FieldLabel>Indexed files</FieldLabel>
-        <Button variant="outline" size="sm" disabled={!!indexing} onClick={() => input.current?.click()}>
-          {indexing ? `Indexing ${indexing}…` : "Add files"}
-        </Button>
-        <input ref={input} type="file" multiple hidden onChange={upload} />
-      </div>
-      <div className="grid gap-2">
-        {!entries.length && <p className="rounded-lg border border-dashed p-3 text-center text-sm text-muted-foreground">No files yet</p>}
-        {entries.map((entry) => (
-          <div key={entry.id} className="flex items-center gap-3 rounded-lg border p-3">
-            <div className="min-w-0 flex-1">
-              <div className="truncate font-medium">{entry.name}</div>
-              <div className="text-sm text-muted-foreground">
-                {Math.max(1, Math.round(entry.size / 1000))}k characters · {entry.chunks} passages
+      <section>
+        <div className="flex items-center justify-between gap-2">
+          <FieldLabel>Indexed files</FieldLabel>
+          <Button variant="outline" size="sm" disabled={!!indexing} onClick={() => input.current?.click()}>
+            {indexing ? "Indexing…" : "Add files"}
+          </Button>
+          <input ref={input} type="file" multiple hidden onChange={upload} />
+        </div>
+        {indexing && <p role="status" className="mt-2 break-words text-xs text-muted-foreground">Indexing {indexing}…</p>}
+        <div className="mt-2 divide-y">
+          {!entries.length && <p className="py-5 text-sm text-muted-foreground">Add documents for Locus to search in your chats.</p>}
+          {entries.map((entry) => (
+            <div key={entry.id} className="flex items-center gap-3 py-3">
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-medium">{entry.name}</div>
+                <div className="text-xs text-muted-foreground tabular-nums">
+                  {Math.max(1, Math.round(entry.size / 1000))}k characters · {entry.chunks} passages
+                </div>
               </div>
+              <Button variant="ghost" size="icon-sm" aria-label={`Delete ${entry.name}`} onClick={() => void remove(entry.id)}>
+                <HugeiconsIcon icon={Delete02Icon} />
+              </Button>
             </div>
-            <Button variant="ghost" size="icon-sm" aria-label={`Delete ${entry.name}`} onClick={() => void remove(entry.id)}>
-              <HugeiconsIcon icon={Delete02Icon} />
-            </Button>
-          </div>
-        ))}
-      </div>
-      {memories.length > 0 && <FieldLabel>Memories</FieldLabel>}
-      <div className="grid gap-2">
-        {memories.toSorted((a, b) => b.at - a.at).map((memory) => (
-          <div key={memory.id} className="flex items-center gap-3 rounded-lg border p-3">
-            {editing === memory.id ? (
-              <Input
-                autoFocus
-                defaultValue={memory.text}
-                aria-label="Memory"
-                onBlur={(event) => save(memory.id, event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") save(memory.id, event.currentTarget.value);
-                  if (event.key === "Escape") setEditing(null);
-                }}
-              />
-            ) : (
-              <>
-                <div className="min-w-0 flex-1 text-sm">{memory.text}</div>
-                <Button variant="ghost" size="icon-sm" aria-label="Edit memory" onClick={() => setEditing(memory.id)}>
-                  <HugeiconsIcon icon={PencilEdit01Icon} />
-                </Button>
-              </>
-            )}
-            <Button variant="ghost" size="icon-sm" aria-label="Delete memory" onClick={() => void forget(memory.id)}>
-              <HugeiconsIcon icon={Delete02Icon} />
-            </Button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </section>
+      {memories.length > 0 && <section>
+        <FieldLabel>Memories</FieldLabel>
+        <div className="mt-2 divide-y">
+          {memories.toSorted((a, b) => b.at - a.at).map((memory) => (
+            <div key={memory.id} className="flex items-center gap-2 py-3">
+              {editing === memory.id ? (
+                <Input
+                  autoFocus
+                  defaultValue={memory.text}
+                  aria-label="Memory"
+                  onBlur={(event) => save(memory.id, event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") save(memory.id, event.currentTarget.value);
+                    if (event.key === "Escape") setEditing(null);
+                  }}
+                />
+              ) : (
+                <>
+                  <div className="min-w-0 flex-1 break-words text-sm">{memory.text}</div>
+                  <Button variant="ghost" size="icon-sm" aria-label="Edit memory" onClick={() => setEditing(memory.id)}>
+                    <HugeiconsIcon icon={PencilEdit01Icon} />
+                  </Button>
+                </>
+              )}
+              <Button variant="ghost" size="icon-sm" aria-label="Delete memory" onClick={() => void forget(memory.id)}>
+                <HugeiconsIcon icon={Delete02Icon} />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </section>}
       {problem && (
         <Alert variant="destructive">
           <AlertDescription>{problem}</AlertDescription>

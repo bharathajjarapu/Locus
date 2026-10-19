@@ -78,7 +78,7 @@ export default function App() {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider>
       <Chats
         chats={chats}
         active={chat.id}
@@ -90,7 +90,7 @@ export default function App() {
         onPin={pin}
         onDelete={remove}
       />
-      <SidebarInset className="h-dvh">
+      <SidebarInset className="h-dvh min-w-0">
         <Chat
           key={chat.id}
           chat={chat}

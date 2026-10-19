@@ -6,6 +6,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSaved } from "@/lib/saved";
 
 type Props = {
+  title: string;
   incognito: boolean;
   setIncognito: (value: boolean) => void;
   empty: boolean;
@@ -19,7 +20,7 @@ const formats = [
 ];
 
 // Top bar floating over the chat
-export function Header({ incognito, setIncognito, empty, onNew, onShare }: Props) {
+export function Header({ title, incognito, setIncognito, empty, onNew, onShare }: Props) {
   const [dark, setDark] = useSaved<boolean>("darkMode", true);
 
   // Switches theme with a crossfade where supported
@@ -31,16 +32,17 @@ export function Header({ incognito, setIncognito, empty, onNew, onShare }: Props
   }
 
   return (
-    <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex h-14 items-center gap-2 px-4 *:pointer-events-auto">
+    <header className="absolute inset-x-0 top-0 z-10 flex h-16 items-center gap-3 bg-background/90 px-3 backdrop-blur-xl sm:px-5">
       <div className="flex items-center gap-1">
         <SidebarTrigger />
         <Button variant="ghost" size="icon-sm" aria-label="New chat" onClick={onNew}>
           <HugeiconsIcon icon={Add01Icon} />
         </Button>
       </div>
-      <div className="ml-auto flex items-center gap-1">
+      <span className="min-w-0 truncate text-sm font-medium">{title}</span>
+      <div className="ml-auto flex shrink-0 items-center gap-1">
         {empty ? (
-          <Button variant={incognito ? "secondary" : "ghost"} size="icon-lg" aria-label="Incognito" onClick={() => setIncognito(!incognito)}>
+          <Button variant={incognito ? "secondary" : "ghost"} size="icon-lg" aria-label="Incognito" aria-pressed={incognito} title={incognito ? "Turn off incognito" : "Start an incognito chat"} onClick={() => setIncognito(!incognito)}>
             <HugeiconsIcon icon={GhostIcon} />
           </Button>
         ) : (

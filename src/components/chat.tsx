@@ -26,7 +26,7 @@ type Props = {
   onNew: () => void;
 };
 
-const prompts = ["Explain a concept like I'm new to it", "Draft a concise follow-up email", "Give me three ideas for a weekend project", "Summarize the pros and cons of remote work"];
+const prompts = ["Explain a concept simply", "Draft a follow-up email", "Brainstorm a weekend project", "Compare two options"];
 const Source = lazy(() => import("@/components/source"));
 
 export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
@@ -237,11 +237,11 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
     <div className="relative flex min-h-0 min-w-0 flex-1">
       <div inert={!!source && mobile} className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         <Artifact />
-        <Header incognito={incognito} setIncognito={setIncognito} empty={empty} onNew={onNew} onShare={(format) => void share(format)} />
+        <Header title={empty ? "Locus" : chat.name} incognito={incognito} setIncognito={setIncognito} empty={empty} onNew={onNew} onShare={(format) => void share(format)} />
 
         <div
           ref={scroller}
-          className={`absolute inset-0 overflow-y-auto p-4 pt-16 [overflow-anchor:none] ${empty ? "" : "fade pb-28"}`}
+          className={`absolute inset-0 overflow-y-auto overscroll-contain px-4 pt-20 [overflow-anchor:none] sm:px-6 ${empty ? "pb-6" : "fade pb-44"}`}
           onScroll={(event) => {
             const element = event.currentTarget;
             // Content growing below the viewport is not an upward scroll.
@@ -252,16 +252,16 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
           }}
         >
           {empty ? (
-            <Empty className="h-full">
-              <EmptyHeader>
-                <EmptyTitle className="text-3xl">{incognito ? "Incognito" : greet(name)}</EmptyTitle>
-                <EmptyDescription>{incognito ? "This chat won't be saved." : "Ask anything. Everything stays on your device."}</EmptyDescription>
+            <Empty className="min-h-full gap-7 rounded-none p-0 py-8">
+              <EmptyHeader className="max-w-lg gap-3">
+                <EmptyTitle className="text-[2rem] leading-tight font-semibold tracking-[-0.03em] sm:text-4xl"><h1>{incognito ? "Incognito chat" : greet(name)}</h1></EmptyTitle>
+                <EmptyDescription>{incognito ? "This conversation won't appear in your history." : "Chat with a model running on your device."}</EmptyDescription>
               </EmptyHeader>
-              <EmptyContent className="max-w-2xl">
+              <EmptyContent className="max-w-2xl gap-5">
                 {composer}
-                <div className="grid w-full gap-2 sm:grid-cols-2">
+                <div className="grid w-full gap-1 px-1 sm:grid-cols-2">
                   {prompts.map((prompt) => (
-                    <Button key={prompt} variant="outline" className="h-auto justify-start py-2 text-left whitespace-normal" onClick={() => setInput(() => prompt)}>
+                    <Button key={prompt} variant="ghost" className="h-auto min-h-10 justify-start px-3 py-2 text-left text-sm font-normal whitespace-normal text-muted-foreground hover:text-foreground" onClick={() => setInput(() => prompt)}>
                       {prompt}
                     </Button>
                   ))}
@@ -294,7 +294,7 @@ export function Chat({ chat, name, nerd, onTitle, onFork, onNew }: Props) {
         </div>
 
         {!empty && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 px-4 pb-4">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
             <div className="pointer-events-auto mx-auto max-w-3xl">
               <Permit />
               <Question />

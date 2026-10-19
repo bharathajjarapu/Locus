@@ -50,9 +50,21 @@ export async function check() {
     assert(host.querySelector('[data-slot="message"]')?.textContent?.includes("Message 0"), "Oldest message was lost");
     assert(getMessages(id).length === 120, "Paging rewrote or truncated saved history");
     assert(writes === 0, "Opening or paging a chat rewrote unchanged history");
+    const input = host.querySelector<HTMLTextAreaElement>('textarea[placeholder="Message…"]')!;
+    const frame = input.closest('[data-slot="input-group"]')!;
+    input.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    input.focus({ preventScroll: true });
+    assert(getComputedStyle(frame).boxShadow === "none", "Pointer focus added a composer halo");
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+    assert(!document.documentElement.hasAttribute("data-keyboard"), "Caret movement enabled keyboard focus");
+    input.addEventListener("keydown", (event) => event.preventDefault(), { once: true });
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+    assert(!document.documentElement.hasAttribute("data-keyboard"), "A handled Tab enabled keyboard focus");
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+    assert(getComputedStyle(frame).boxShadow !== "none", "Keyboard navigation lost its focus indicator");
+    input.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
     // A local failure finishes the send path without downloading a model.
     localStorage.setItem(`chat_meta_${id}`, "{");
-    const input = host.querySelector<HTMLTextAreaElement>('textarea[placeholder="Message…"]')!;
     Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(input, "Save this message");
     input.dispatchEvent(new Event("input", { bubbles: true }));
     await wait(() => !!host.querySelector('button[aria-label="Send"]'));

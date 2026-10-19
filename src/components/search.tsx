@@ -23,16 +23,16 @@ export function Search({ open, setOpen, chats, onSelect }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(next) => (setOpen(next), setQuery(""))}>
-      <DialogContent showCloseButton={false} className="gap-2 p-2">
-        <DialogTitle className="sr-only">Search chats</DialogTitle>
-        <Input autoFocus placeholder="Search chats…" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => event.key === "Enter" && found[0] && pick(found[0].id)} />
-        <div className="max-h-72 overflow-y-auto">
+      <DialogContent className="gap-4 p-5">
+        <DialogTitle className="pr-8 text-base font-semibold">Search chats</DialogTitle>
+        <Input autoFocus aria-label="Search by chat name" placeholder="Search by name…" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => event.key === "Enter" && found[0] && pick(found[0].id)} />
+        <div className="max-h-[min(24rem,55dvh)] space-y-1 overflow-y-auto overscroll-contain">
           {found.map((chat) => (
-            <Button key={chat.id} variant="ghost" className="w-full justify-start" onClick={() => pick(chat.id)}>
-              {chat.name}
+            <Button key={chat.id} variant="ghost" className="h-10 w-full justify-start px-3 text-left" onClick={() => pick(chat.id)}>
+              <span className="truncate">{chat.name}</span>
             </Button>
           ))}
-          {!found.length && <p className="p-2 text-sm text-muted-foreground">No chats match.</p>}
+          {!found.length && <div className="px-3 py-8 text-center text-sm"><p>No chats found</p><p className="mt-1 text-muted-foreground">Try a different name.</p></div>}
         </div>
       </DialogContent>
     </Dialog>

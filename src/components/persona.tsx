@@ -23,7 +23,7 @@ export function Persona() {
     <FieldGroup>
       <Field>
         <FieldLabel htmlFor="about">About you</FieldLabel>
-        <Input id="about" value={about} placeholder="Nursing student in Hyderabad, likes cricket" onChange={(event) => setAbout(event.target.value)} />
+        <Input id="about" value={about} placeholder="Your work, interests, or preferences" onChange={(event) => setAbout(event.target.value)} />
       </Field>
       <Field orientation="horizontal">
         <FieldLabel>Tone</FieldLabel>
@@ -38,7 +38,7 @@ export function Persona() {
           <FieldLabel htmlFor="persona">Instructions</FieldLabel>
           <Pick label="Presets" items={presets} value={persona} onChange={setPersona}>Presets</Pick>
         </div>
-        <Textarea id="persona" rows={3} value={persona} placeholder="You are a patient math tutor." onChange={(event) => setPersona(event.target.value)} />
+        <Textarea id="persona" rows={4} value={persona} placeholder="How would you like Locus to respond?" onChange={(event) => setPersona(event.target.value)} />
       </Field>
     </FieldGroup>
   );
